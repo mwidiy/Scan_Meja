@@ -1,12 +1,12 @@
 // src/app/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { getTableByQrCode } from '../services/api';
 
-export default function WelcomePage() {
+function WelcomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [name, setName] = useState('');
@@ -266,5 +266,13 @@ export default function WelcomePage() {
                 </motion.div>
             </motion.div>
         </>
+    );
+}
+
+export default function WelcomePage() {
+    return (
+        <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fff' }}>Loading...</div>}>
+            <WelcomeContent />
+        </Suspense>
     );
 }

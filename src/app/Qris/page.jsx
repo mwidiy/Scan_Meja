@@ -351,7 +351,7 @@ export default function QrisPage() {
     return (
         <div className="app">
             <style jsx global>{`
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+                
                 :root {
                     --bg-main: #2C3E50;
                     --card-bg: #FFFFFF;

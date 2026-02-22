@@ -194,7 +194,6 @@ export default function PaymentPage() {
             className="payment-container"
         >
             <style jsx global>{`
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
                 
                 :root {
                     --bg-page: #F3F4F6;
