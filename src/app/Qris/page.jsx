@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QRCode from 'react-qr-code';
 import { getDynamicUrl } from '../../services/api';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function QrisPage() {
+function QrisContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -518,5 +518,13 @@ export default function QrisPage() {
                 )}
             </AnimatePresence>
         </div>
+    );
+}
+
+export default function QrisPage() {
+    return (
+        <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#2C3E50', color: '#fff' }}>Loading...</div>}>
+            <QrisContent />
+        </Suspense>
     );
 }

@@ -295,7 +295,7 @@ function KasirContent() {
     );
 }
 
-export default function KasirPage() {
+function KasirPageLayout() {
     const router = useRouter();
 
     return (
@@ -635,10 +635,16 @@ export default function KasirPage() {
                     </div>
                 </header>
 
-                <Suspense fallback={<div>Loading...</div>}>
-                    <KasirContent />
-                </Suspense>
+                <KasirContent />
             </div>
         </>
+    );
+}
+
+export default function KasirPage() {
+    return (
+        <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#2C3E50', color: '#fff' }}>Loading...</div>}>
+            <KasirPageLayout />
+        </Suspense>
     );
 }

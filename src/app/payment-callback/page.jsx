@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getDynamicUrl } from '../../services/api';
 
-export default function PaymentCallbackPage() {
+function PaymentCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -119,5 +119,13 @@ export default function PaymentCallbackPage() {
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>
+    );
+}
+
+export default function PaymentCallbackPage() {
+    return (
+        <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#fff' }}>Loading...</div>}>
+            <PaymentCallbackContent />
+        </Suspense>
     );
 }
