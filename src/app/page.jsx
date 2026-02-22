@@ -53,6 +53,15 @@ function WelcomeContent() {
             alert("Silakan isi nama Anda terlebih dahulu!");
             return;
         }
+
+        // --- Perbaikan UX Vercel Pingpong ---
+        // Pastikan meja udah berhasil diverifikasi sama API sebelum masuk /home
+        const tableData = localStorage.getItem('customer_table');
+        if (!tableData) {
+            alert("Sistem belum mendeteksi Kode Meja yang valid. Silakan scan ulang QR Code dari kasir!");
+            return;
+        }
+
         // Security: Sanitize before storage
         const safeName = name.trim().substring(0, 20).replace(/[<>]/g, "");
         localStorage.setItem('customerName', safeName);

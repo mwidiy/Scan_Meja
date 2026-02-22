@@ -4,7 +4,8 @@
 export const getDynamicUrl = () => {
     // 1. PRIORITAS UTAMA: Environment variable (untuk production / explicit config)
     if (process.env.NEXT_PUBLIC_API_URL) {
-        return process.env.NEXT_PUBLIC_API_URL;
+        // Hapus garis miring di akhir url supaya tidak nyambung jadi double slash (//)
+        return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
     }
 
     // 2. FALLBACK DEVELOPMENT: Gunakan hostname dari browser + port 3000
