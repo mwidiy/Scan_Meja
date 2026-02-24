@@ -130,6 +130,9 @@ export const getArModelUrl = (urlOrFilename) => {
 
     // Jika URL lengkap (ada http/https)
     if (urlOrFilename.startsWith('http')) {
+        // BYPASS: Do not rewrite Supabase CDN URLs
+        if (urlOrFilename.includes('supabase.co')) return urlOrFilename;
+
         try {
             const apiUrlObj = new URL(API_URL);
             const modelUrlObj = new URL(urlOrFilename);
