@@ -99,6 +99,9 @@ export const getImageUrl = (urlOrFilename) => {
 
     // Jika URL lengkap (ada http/https)
     if (urlOrFilename.startsWith('http')) {
+        // BYPASS: Do not rewrite Cloudinary CDN URLs
+        if (urlOrFilename.includes('cloudinary.com')) return urlOrFilename;
+
         try {
             const apiUrlObj = new URL(API_URL);
             const imgUrlObj = new URL(urlOrFilename);
