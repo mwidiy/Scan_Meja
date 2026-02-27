@@ -89,12 +89,14 @@ function QrisContent() {
         const guardQris = () => {
             const p_id = searchParams.get('orderId') || searchParams.get('id');
             const s_raw = sessionStorage.getItem('post_payment_state');
+            const p_raw = sessionStorage.getItem('pending_order_payload'); // TAHAP 37: Allow pending payload
             let s_id = null;
             if (s_raw) {
                 try { s_id = JSON.parse(s_raw).transactionCode; } catch (e) { }
             }
 
-            if (!p_id && !s_id) {
+            // Must have one of these to stay on the page
+            if (!p_id && !s_id && !p_raw) {
                 // Check backup before redirecting (for refresh support)
                 const backup = localStorage.getItem('qris_backup');
                 if (!backup) {
@@ -278,8 +280,11 @@ function QrisContent() {
 
     // TIMER EXPIRY LOGIC
     useEffect(() => {
+        // TAHAP 37: Fix Expiry Loop Bug - Don't expire while we are in initial background loading
+        if (loadingQr || !orderId) return;
+
         // Security: Check both visual timer and server timestamp
-        const isTimerExpired = remaining === 0 || Date.now() > serverExpiry;
+        const isTimerExpired = remaining <= 0 || Date.now() > serverExpiry;
         if (isTimerExpired && !isPaid && !isExpired && orderId) {
             setIsExpired(true);
 
@@ -301,7 +306,7 @@ function QrisContent() {
                 router.push('/payment');
             }, 3500);
         }
-    }, [remaining, isPaid, isExpired, orderId, orderState, router, serverExpiry]);
+    }, [remaining, isPaid, isExpired, orderId, orderState, router, serverExpiry, loadingQr]);
 
     // 2. Fetch QR Code Trigger
     useEffect(() => {
