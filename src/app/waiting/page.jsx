@@ -224,6 +224,13 @@ export default function TrackingPage() {
                     }
                 } catch (e) { }
             }
+
+            // TAHAP 37: Real-Time Sync Fix
+            // Must join the specific transaction room to get individual 'order_update' events
+            if (currentCode) {
+                socket.emit('join_room', currentCode);
+                if (process.env.NODE_ENV !== 'production') console.log(`🔌 Joined room for transaction: ${currentCode}`);
+            }
         });
 
         socket.on('order_status_updated', (updatedOrder) => {

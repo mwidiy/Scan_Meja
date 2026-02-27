@@ -147,8 +147,9 @@ function QrisContent() {
                         }));
                     } catch (err) {
                         if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
-                        setError("Pembuatan pesanan gagal. Silakan kembali dan coba lagi (Error: " + (err.message || 'Server sibuk') + ").");
-                        setLoadingQr(false);
+                        alert("Pembuatan pesanan gagal. Silakan kembali dan coba lagi (Error: " + (err.message || 'Server sibuk') + ").");
+                        sessionStorage.removeItem('pending_order_payload'); // Clear to prevent loops
+                        router.replace('/payment'); // Rollback to payment selection
                     }
                 };
                 executeOrder();

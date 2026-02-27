@@ -54,7 +54,9 @@ export default function ReceiptPage() {
 
                         } catch (err) {
                             if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
-                            alert("Peringatan: Pembuatan pesanan gagal di latar belakang. Silakan lapor kasir.");
+                            alert("Peringatan: Pembuatan pesanan gagal di latar belakang. Anda akan dikembalikan ke halaman pembayaran.");
+                            sessionStorage.removeItem('pending_order_payload'); // Clear to prevent loops
+                            router.replace('/payment'); // Rollback to payment selection
                         }
                     };
                     executeOrder();
