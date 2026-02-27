@@ -131,36 +131,29 @@ export default function PaymentPage() {
                 })),
                 totalAmount: orderState.subtotal,
                 paymentMethod: selectedMethod,
-                paymentStatus: 'Unpaid',
+                paymentStatus: selectedMethod === 'qris' ? 'Unpaid' : 'Unpaid', // Cash is unpaid until cashier confirms
                 orderType: orderState.orderType,
                 note: orderState.notes,
                 deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null
             };
 
-            const response = await createOrder(payload);
-
-            // TAHAP 35: Wipe cart memory entirely after successful order
+            // TAHAP 36: OPTIMISTIC CHECKOUT
+            // 1. Wipe cart immediately
             try {
                 sessionStorage.removeItem('cart_v1');
                 localStorage.removeItem('cart_v1'); // Clean legacy
             } catch (e) { }
 
-            const finalState = {
-                ...orderState,
-                method: selectedMethod,
-                transactionCode: response.data.transactionCode,
-                orderId: response.data.id
-            };
+            // 2. Set strict payload transfer to the next page
+            try {
+                sessionStorage.setItem('pending_order_payload', JSON.stringify(payload));
+            } catch (e) { }
 
-            // Security: Use sessionStorage instead of URL
-            try { sessionStorage.setItem('post_payment_state', JSON.stringify(finalState)); } catch (e) { }
-
-            const orderIdParam = response.data?.id ? `?orderId=${response.data.id}` : '';
-
+            // 3. Navigate instantly (0 latency API block)
             if (selectedMethod === 'qris') {
-                router.push(`/Qris${orderIdParam}`);
+                router.push('/Qris');
             } else {
-                router.push(`/order${orderIdParam}`);
+                router.push('/order');
             }
 
         } catch (error) {

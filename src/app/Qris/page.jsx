@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QRCode from 'react-qr-code';
-import { getDynamicUrl } from '../../services/api';
+import { getDynamicUrl, createOrder } from '../../services/api';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -110,6 +110,51 @@ function QrisContent() {
         let idParam, amtParam, numId; // numId for redirect
         try {
             // Security: Read from sessionStorage
+            const pendingPayloadRaw = sessionStorage.getItem('pending_order_payload');
+
+            if (pendingPayloadRaw) {
+                // TAHAP 36: OPTIMISTIC CHECKOUT - Background API Execution
+                const parsedPayload = JSON.parse(pendingPayloadRaw);
+                setLoadingQr(true); // Keep spinner active while creating order
+
+                const executeOrder = async () => {
+                    try {
+                        const response = await createOrder(parsedPayload);
+                        sessionStorage.removeItem('pending_order_payload'); // Clear to prevent loops
+
+                        // Fake the old post_payment_state so the rest of the useEffect flows normally
+                        const finalState = {
+                            items: parsedPayload.items,
+                            subtotal: parsedPayload.totalAmount,
+                            orderType: parsedPayload.orderType,
+                            method: parsedPayload.paymentMethod,
+                            transactionCode: response.data.transactionCode,
+                            orderId: response.data.id
+                        };
+                        sessionStorage.setItem('post_payment_state', JSON.stringify(finalState));
+
+                        setOrderState(finalState);
+                        setOrderId(response.data.id);
+                        setAmount(parsedPayload.totalAmount);
+                        numericIdRef.current = response.data.id;
+                        idParam = response.data.transactionCode;
+
+                        // Backup
+                        localStorage.setItem('qris_backup', JSON.stringify({
+                            id: response.data.transactionCode,
+                            numericId: response.data.id,
+                            amount: parsedPayload.totalAmount
+                        }));
+                    } catch (err) {
+                        if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
+                        setError("Pembuatan pesanan gagal. Silakan kembali dan coba lagi (Error: " + (err.message || 'Server sibuk') + ").");
+                        setLoadingQr(false);
+                    }
+                };
+                executeOrder();
+                return; // Let the async function handle the state updates and trigger the next useEffect
+            }
+
             const raw = sessionStorage.getItem('post_payment_state');
             if (raw) {
                 const parsed = JSON.parse(raw);
@@ -127,9 +172,6 @@ function QrisContent() {
                 // Security: Validate Amount (Max 99jt, Positive)
                 const rawAmt = Number(parsed.subtotal || parsed.totalAmount);
                 amtParam = Math.max(0, Math.min(rawAmt || 0, 99999999));
-
-                // Security: Clean up sessionStorage to prevent replay
-                // sessionStorage.removeItem('post_payment_state'); // REMOVED: Keep state for refresh/strict-mode
 
                 // NEW: Backup for refresh resilience (Store both IDs)
                 localStorage.setItem('qris_backup', JSON.stringify({

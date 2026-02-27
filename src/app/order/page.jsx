@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getOrderByTransactionCode, getOrderById, getStore } from '../../services/api';
+import { getOrderByTransactionCode, getOrderById, getStore, createOrder } from '../../services/api';
 
 export default function ReceiptPage() {
     const router = useRouter();
@@ -14,6 +14,53 @@ export default function ReceiptPage() {
             let parsed = null;
 
             try {
+                // TAHAP 36: OPTIMISTIC CHECKOUT (Cash/Insta-Receipt Flow)
+                const pendingPayloadRaw = sessionStorage.getItem('pending_order_payload');
+                if (pendingPayloadRaw) {
+                    const parsedPayload = JSON.parse(pendingPayloadRaw);
+
+                    // 1. Instant Optimistic UI Render
+                    setOrderData(prev => ({
+                        ...prev,
+                        id: 'Memproses...', // Temporary Loading ID
+                        transactionCode: 'Memproses...',
+                        items: parsedPayload.items.map(it => ({
+                            name: `Produk ID: ${it.productId}`, // Fallback if name not passed
+                            price: it.price,
+                            qty: it.quantity
+                        })), // Note: We might lack exact names here, but for cash order usually the user knows what they ordered. Wait for backend to fix it.
+                        method: parsedPayload.paymentMethod,
+                        date: new Date().toISOString(),
+                        status: 'unpaid',
+                        storeName: 'Memproses...'
+                    }));
+
+                    // 2. Background API Execution
+                    const executeOrder = async () => {
+                        try {
+                            const response = await createOrder(parsedPayload);
+                            sessionStorage.removeItem('pending_order_payload');
+
+                            // 3. Silent UI Update with Real Data
+                            setOrderData(prev => ({
+                                ...prev,
+                                id: response.data.id,
+                                transactionCode: response.data.transactionCode,
+                                // Trigger a re-fetch of the order to get full names/details from server
+                            }));
+
+                            // Rehydrate full data from server to get accurate names and configurations
+                            fetchOrderByCode(response.data.transactionCode);
+
+                        } catch (err) {
+                            if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
+                            alert("Peringatan: Pembuatan pesanan gagal di latar belakang. Silakan lapor kasir.");
+                        }
+                    };
+                    executeOrder();
+                    return; // Stop standard flow
+                }
+
                 // Security: Read from sessionStorage (order_state from QRIS, post_payment_state from Cash)
                 let raw = sessionStorage.getItem('order_state') || sessionStorage.getItem('post_payment_state');
 
