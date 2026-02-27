@@ -66,10 +66,10 @@ export default function StatusPage() {
     // Security: Use sessionStorage to prevent URL data leak
     const safeOrder = {
       items: order.items.map(item => ({
-        name: item.product.name ? String(item.product.name).replace(/[<>&"']/g, '') : 'Item',
+        name: item.product?.name ? String(item.product.name).replace(/[<>&"']/g, '') : 'Item',
         price: item.priceSnapshot,
         qty: item.quantity,
-        image: item.product.image ? getImageUrl(item.product.image) : '/assets/placeholder.png'
+        image: item.product?.image ? getImageUrl(item.product.image) : '/assets/placeholder.png'
       })),
       transactionCode: order.transactionCode,
       queueNumber: order.queueNumber ? String(order.queueNumber).replace(/[^0-9\-]/g, '') : '-'
@@ -511,7 +511,7 @@ export default function StatusPage() {
 
                     <div className="p-wrapper">
                       <p className="p">
-                        {order.items.map(i => `${i.quantity}x ${i.product.name ? String(i.product.name).replace(/[<>&"']/g, '') : 'Item'}`).join(', ')}
+                        {order.items.map(i => `${i.quantity}x ${i.product?.name ? String(i.product.name).replace(/[<>&"']/g, '') : 'Item'}`).join(', ')}
                       </p>
                     </div>
 

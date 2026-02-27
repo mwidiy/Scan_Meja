@@ -167,7 +167,7 @@ export default function ReceiptPage() {
                         setOrderData({
                             id: order.id,
                             items: order.items.map(i => ({
-                                name: String(i.product.name || 'Item').substring(0, 50).replace(/[<>&"']/g, ''),
+                                name: String(i.product?.name || 'Item').substring(0, 50).replace(/[<>&"']/g, ''),
                                 price: i.priceSnapshot,
                                 qty: i.quantity,
                                 image: ''
@@ -194,7 +194,7 @@ export default function ReceiptPage() {
                         setOrderData({
                             id: order.id,
                             items: order.items.map(i => ({
-                                name: String(i.product.name || 'Item').substring(0, 50).replace(/[<>&"']/g, ''),
+                                name: String(i.product?.name || 'Item').substring(0, 50).replace(/[<>&"']/g, ''),
                                 price: i.priceSnapshot, // Note: backend doesn't seem to store price snapshot in items directly based on controller, but let's assume it does or product.price
                                 qty: i.quantity,
                                 image: ''
@@ -426,6 +426,11 @@ export default function ReceiptPage() {
 
                     <div className="bottom-bar">
                         <button className="track-btn" onClick={() => {
+                            // TAHAP 39: BUG FIX - The Phantom Race Condition
+                            if (orderData.transactionCode === 'Memproses...') {
+                                alert("Mohon tunggu sebentar, pesanan Anda sedang diverifikasi oleh server sebelum dapat dilacak.");
+                                return;
+                            }
                             const trackingState = {
                                 items: orderData.items,
                                 status: orderData.status,
@@ -434,7 +439,11 @@ export default function ReceiptPage() {
                             };
                             try { sessionStorage.setItem('waiting_state', JSON.stringify(trackingState)); } catch (e) { }
                             router.push('/waiting');
-                        }}>
+                        }}
+                            style={{
+                                opacity: orderData.transactionCode === 'Memproses...' ? 0.7 : 1,
+                                cursor: orderData.transactionCode === 'Memproses...' ? 'not-allowed' : 'pointer'
+                            }}>
                             <span className="track-btn-icon">
                                 <img src="/assets/gps.svg" alt="Lacak" />
                             </span>

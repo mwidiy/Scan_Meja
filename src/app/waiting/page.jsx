@@ -70,11 +70,11 @@ export default function TrackingPage() {
                 // 1. Sync State
                 if (order.items && order.items.length > 0) {
                     const mappedItems = order.items.map(item => ({
-                        // Security: Sanitize item name
-                        name: item.product.name ? String(item.product.name).replace(/[<>&"']/g, '') : 'Item',
+                        // Security & Crash Protection: Sanitize item name and handle deleted products (null)
+                        name: item.product?.name ? String(item.product.name).replace(/[<>&"']/g, '') : 'Item',
                         price: item.priceSnapshot,
                         qty: item.quantity,
-                        image: item.product.image ? getImageUrl(item.product.image) : ''
+                        image: item.product?.image ? getImageUrl(item.product.image) : ''
                     }));
                     setOrderItems(mappedItems);
                 }
@@ -188,7 +188,15 @@ export default function TrackingPage() {
             // --- FALLBACK: DIRECT PARAMETER ---
             if (!currentCode) {
                 const directId = params.get('orderId') || params.get('id') || params.get('transactionCode');
-                if (directId) currentCode = String(directId).substring(0, 50).replace(/[^a-zA-Z0-9\-_]/g, '');
+                if (directId) currentCode = String(directId).substring(0, 50).replace(/[^a-zA-Z0-9\-_.]/g, '');
+            }
+
+            // TAHAP 39: BUG FIX - Bulletproof Guard against poisoned local storage
+            if (currentCode === 'Memproses...' || currentCode === 'Memproses') {
+                sessionStorage.removeItem('waiting_state');
+                alert("Sesi pelacakan Anda telah usang. Silakan pindai ulang QR Meja.");
+                router.replace('/home');
+                return;
             }
 
             if (currentCode) {
