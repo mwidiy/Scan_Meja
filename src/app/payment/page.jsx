@@ -139,6 +139,12 @@ export default function PaymentPage() {
 
             const response = await createOrder(payload);
 
+            // TAHAP 35: Wipe cart memory entirely after successful order
+            try {
+                sessionStorage.removeItem('cart_v1');
+                localStorage.removeItem('cart_v1'); // Clean legacy
+            } catch (e) { }
+
             const finalState = {
                 ...orderState,
                 method: selectedMethod,

@@ -15,6 +15,26 @@ const formatRupiah = (price) => {
         minimumFractionDigits: 0
     }).format(price);
 };
+// --- SKELETON COMPONENT (TAHAP 35) ---
+const MenuSkeleton = () => (
+    <div className="menu-card" style={{ cursor: 'default' }}>
+        <div style={{
+            width: '100%', aspectRatio: '4/3.3', borderRadius: '18px', marginBottom: '10px',
+            background: 'linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%)',
+            backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
+        }} />
+        <div style={{
+            height: '16px', width: '80%', borderRadius: '4px', marginBottom: '8px',
+            background: 'linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%)',
+            backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
+        }} />
+        <div style={{
+            height: '14px', width: '50%', borderRadius: '4px',
+            background: 'linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%)',
+            backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite'
+        }} />
+    </div>
+);
 
 export default function HomePixelPerfect() {
     const router = useRouter();
@@ -305,10 +325,10 @@ export default function HomePixelPerfect() {
         };
     }, []);
 
-    // load cart from localStorage on mount
+    // load cart from sessionStorage on mount (TAHAP 35)
     useEffect(() => {
         try {
-            const raw = localStorage.getItem('cart_v1');
+            const raw = sessionStorage.getItem('cart_v1');
             if (raw) {
                 const parsed = JSON.parse(raw);
                 // Security: Validate cart structure
@@ -326,9 +346,9 @@ export default function HomePixelPerfect() {
         } catch (e) { /* ignore */ }
     }, []);
 
-    // persist cart to localStorage
+    // persist cart to sessionStorage (TAHAP 35)
     useEffect(() => {
-        try { localStorage.setItem('cart_v1', JSON.stringify(cart)); } catch (e) { }
+        try { sessionStorage.setItem('cart_v1', JSON.stringify(cart)); } catch (e) { }
     }, [cart]);
 
     // sync cart across tabs/windows
@@ -638,6 +658,11 @@ export default function HomePixelPerfect() {
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        @keyframes shimmer { 
+            0% { background-position: 200% 0; } 
+            100% { background-position: -200% 0; } 
+        }
+        }
       `}</style>
 
             <div className="app-wrapper">
@@ -806,9 +831,9 @@ export default function HomePixelPerfect() {
                     {/* MENU GRID */}
                     <main className="menu-grid">
                         {isLoading ? (
-                            <div className="col-span-2 text-center py-10 text-gray-500 font-medium">
-                                Memuat Menu...
-                            </div>
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <MenuSkeleton key={`skeleton-${i}`} />
+                            ))
                         ) : filteredProducts.length === 0 ? (
                             <div className="col-span-2 text-center py-10 text-gray-400">
                                 Produk tidak ditemukan.
