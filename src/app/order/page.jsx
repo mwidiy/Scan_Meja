@@ -6,6 +6,7 @@ import { getOrderByTransactionCode, getOrderById, getStore, createOrder } from '
 export default function ReceiptPage() {
     const router = useRouter();
     const [orderData, setOrderData] = useState({ id: '', items: [], method: 'QRIS', date: '', meta: {}, status: 'paid', storeName: '' });
+    const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
 
     useEffect(() => {
         // --- 1. Parsing Order State / Params ---
@@ -34,6 +35,7 @@ export default function ReceiptPage() {
                         status: 'unpaid',
                         storeName: 'Memproses...'
                     }));
+                    setIsLoading(false); // END LOADING INSTANTLY
 
                     // 2. Background API Execution
                     const executeOrder = async () => {
@@ -117,6 +119,7 @@ export default function ReceiptPage() {
                                 transactionCode: safeCode,
                                 storeName: safeStoreName
                             }));
+                            setIsLoading(false); // END LOADING
                         }, 0);
                         return; // Done if items exist
                     }
@@ -155,6 +158,7 @@ export default function ReceiptPage() {
                 // Nothing found
                 setTimeout(() => {
                     setOrderData(prev => ({ ...prev, id: `MP${Date.now()}`, date: new Date().toISOString(), transactionCode: '-' }));
+                    setIsLoading(false);
                 }, 0);
             }
         };
@@ -306,6 +310,15 @@ export default function ReceiptPage() {
         .line-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
         .line-item-name { font-size:15px; font-weight:500; color:#1F2937; }
         .line-item-price { font-size:15px; font-weight:600; color:#1F2937; }
+        
+        /* PREMIUM DASHED DIVIDER */
+        .dashed-divider {
+            height: 2px;
+            background-image: linear-gradient(to right, #D1D5DB 50%, transparent 50%);
+            background-size: 12px 2px;
+            background-repeat: repeat-x;
+            margin: 20px 0;
+        }
 
         .info-list { margin-top:18px; }
         .info-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:14px; }
@@ -318,6 +331,17 @@ export default function ReceiptPage() {
         .store-footer { text-align:center; margin:24px auto 0; color:var(--text-sub); font-size:13px; line-height:1.5; opacity: 0.8; }
         .store-footer .store-label { font-size:12px; color:var(--text-sub); margin-bottom: 2px;}
         .store-footer .store-name { font-size:16px; font-weight:700; color:#1F2937; }
+
+        /* SKELETON ANIMATION */
+        .skeleton-pulse {
+            animation: pulse 1.5s infinite ease-in-out;
+            background-color: #E5E7EB;
+            border-radius: 4px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
         /* Floating Bottom Bar (Consistent) */
         .bottom-bar { 
@@ -345,75 +369,101 @@ export default function ReceiptPage() {
 
                     <div className="page-body">
                         <div className="receipt-shell">
-                            <div className="receipt-card">
-                                <div className="receipt-header">
-                                    <div className="receipt-header-icon" style={{ backgroundColor: orderData.status === 'unpaid' ? '#FEF3C7' : '#FFFFFF' }}>
-                                        {orderData.status === 'unpaid' ? (
-                                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <circle cx="12" cy="12" r="10" />
-                                                <polyline points="12 6 12 12 16 14" />
-                                            </svg>
-                                        ) : (
-                                            <img src="/assets/sukses.svg" alt="Pembayaran Berhasil" />
-                                        )}
+                            {isLoading ? (
+                                <div className="receipt-card" style={{ padding: 0 }}>
+                                    <div className="receipt-header" style={{ paddingBottom: 32 }}>
+                                        <div className="skeleton-pulse" style={{ width: 72, height: 72, borderRadius: '50%', margin: '0 auto 16px' }}></div>
+                                        <div className="skeleton-pulse" style={{ width: '60%', height: 24, margin: '0 auto', borderRadius: 8 }}></div>
                                     </div>
-                                    <div className="receipt-header-title" style={{ color: orderData.status === 'unpaid' ? '#FFF' : '#FFFFFF' }}>
-                                        {orderData.status === 'unpaid' ? 'Menunggu Pembayaran' : 'Pembayaran Berhasil!'}
-                                    </div>
-                                </div>
-
-                                <div className="receipt-body">
-                                    <div className="total-block">
-                                        <div className="total-label">Total Pembayaran</div>
-                                        <div className="total-value">{formatRupiah(total)}</div>
-                                    </div>
-
-                                    <div className="divider" />
-
-                                    <div className="section-title">Detail Pesanan</div>
-                                    {(orderData.items || []).length === 0 ? (
-                                        <div className="line-item">
-                                            <span className="line-item-name">Tidak ada item</span>
-                                            <span className="line-item-price">{formatRupiah(0)}</span>
+                                    <div className="receipt-body">
+                                        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                                            <div className="skeleton-pulse" style={{ width: '40%', height: 16, margin: '0 auto 8px', borderRadius: 4 }}></div>
+                                            <div className="skeleton-pulse" style={{ width: '50%', height: 40, margin: '0 auto', borderRadius: 8 }}></div>
                                         </div>
-                                    ) : (
-                                        orderData.items.map((it, i) => (
-                                            <div className="line-item" key={i}>
-                                                <span className="line-item-name">{(it.qty || 1) > 1 ? `${it.qty}x ${it.name}` : `1x ${it.name}`}</span>
-                                                <span className="line-item-price">{formatRupiah((it.price || 0) * (it.qty || 1))}</span>
+                                        <div className="dashed-divider" />
+                                        <div className="skeleton-pulse" style={{ width: '40%', height: 20, marginBottom: 16, borderRadius: 4 }}></div>
+                                        {[1, 2, 3].map(i => (
+                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                                <div className="skeleton-pulse" style={{ width: '50%', height: 16, borderRadius: 4 }}></div>
+                                                <div className="skeleton-pulse" style={{ width: '20%', height: 16, borderRadius: 4 }}></div>
                                             </div>
-                                        ))
-                                    )}
-
-                                    <div className="divider-thin" />
-
-                                    <div className="info-list">
-                                        <div className="info-row">
-                                            <span className="info-label">Order ID</span>
-                                            <span className="info-value">{orderData.id || '-'}</span>
+                                        ))}
+                                        <div className="dashed-divider" />
+                                        <div className="skeleton-pulse" style={{ width: '100%', height: 120, borderRadius: 8 }}></div>
+                                    </div>
+                                    <div className="tear-pattern" />
+                                </div>
+                            ) : (
+                                <div className="receipt-card">
+                                    <div className="receipt-header">
+                                        <div className="receipt-header-icon" style={{ backgroundColor: orderData.status === 'unpaid' ? '#FEF3C7' : '#FFFFFF' }}>
+                                            {orderData.status === 'unpaid' ? (
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="12 6 12 12 16 14" />
+                                                </svg>
+                                            ) : (
+                                                <img src="/assets/sukses.svg" alt="Pembayaran Berhasil" />
+                                            )}
                                         </div>
-                                        <div className="info-row">
-                                            <span className="info-label">Metode Pembayaran</span>
-                                            <span className="info-value">{orderData.method || 'QRIS'}</span>
-                                        </div>
-                                        <div className="info-row">
-                                            <span className="info-label">Tanggal</span>
-                                            <span className="info-value">{formattedDate}</span>
-                                        </div>
-                                        <div className="info-row">
-                                            <span className="info-label">Status</span>
-                                            <span className="status-pill" style={{
-                                                backgroundColor: orderData.status === 'unpaid' ? '#FEF3C7' : '#DCFCE7',
-                                                color: orderData.status === 'unpaid' ? '#D97706' : '#15803D'
-                                            }}>
-                                                {orderData.status === 'unpaid' ? 'BELUM DIBAYAR' : 'LUNAS'}
-                                            </span>
+                                        <div className="receipt-header-title" style={{ color: orderData.status === 'unpaid' ? '#FFF' : '#FFFFFF' }}>
+                                            {orderData.status === 'unpaid' ? 'Menunggu Pembayaran' : 'Pembayaran Berhasil!'}
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="tear-pattern" />
-                            </div>
+                                    <div className="receipt-body">
+                                        <div className="total-block">
+                                            <div className="total-label">Total Pembayaran</div>
+                                            <div className="total-value">{formatRupiah(total)}</div>
+                                        </div>
+
+                                        <div className="dashed-divider" />
+
+                                        <div className="section-title">Detail Pesanan</div>
+                                        {(orderData.items || []).length === 0 ? (
+                                            <div className="line-item">
+                                                <span className="line-item-name">Tidak ada item</span>
+                                                <span className="line-item-price">{formatRupiah(0)}</span>
+                                            </div>
+                                        ) : (
+                                            orderData.items.map((it, i) => (
+                                                <div className="line-item" key={i}>
+                                                    <span className="line-item-name">{(it.qty || 1) > 1 ? `${it.qty}x ${it.name}` : `1x ${it.name}`}</span>
+                                                    <span className="line-item-price">{formatRupiah((it.price || 0) * (it.qty || 1))}</span>
+                                                </div>
+                                            ))
+                                        )}
+
+                                        <div className="dashed-divider" />
+
+                                        <div className="info-list">
+                                            <div className="info-row">
+                                                <span className="info-label">Order ID</span>
+                                                <span className="info-value">{orderData.id || '-'}</span>
+                                            </div>
+                                            <div className="info-row">
+                                                <span className="info-label">Metode Pembayaran</span>
+                                                <span className="info-value">{orderData.method || 'QRIS'}</span>
+                                            </div>
+                                            <div className="info-row">
+                                                <span className="info-label">Tanggal</span>
+                                                <span className="info-value">{formattedDate}</span>
+                                            </div>
+                                            <div className="info-row">
+                                                <span className="info-label">Status</span>
+                                                <span className="status-pill" style={{
+                                                    backgroundColor: orderData.status === 'unpaid' ? '#FEF3C7' : '#DCFCE7',
+                                                    color: orderData.status === 'unpaid' ? '#D97706' : '#15803D'
+                                                }}>
+                                                    {orderData.status === 'unpaid' ? 'BELUM DIBAYAR' : 'LUNAS'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="tear-pattern" />
+                                </div>
+                            )}
 
                             {orderData.storeName ? (
                                 <div className="store-footer">

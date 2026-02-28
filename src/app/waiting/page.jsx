@@ -17,6 +17,7 @@ export default function TrackingPage() {
     const [transactionCode, setTransactionCode] = useState('-');
     const [customerName, setCustomerName] = useState('-');
     const [estimatedTime, setEstimatedTime] = useState('-');
+    const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
 
     // --- WHATSAPP LOGIC (Moved up) ---
     const [whatsappNumber, setWhatsappNumber] = useState(null);
@@ -97,15 +98,20 @@ export default function TrackingPage() {
                 }
 
                 // 3. SMART QUEUE 4.0 LOGIC
-                if (order.queuePosition) {
-                    setQueueNumber(String(order.queuePosition));
-                } else if (order.queueNumber) {
+                // FIX 46 PWA: Pisahkan fungsi Nomor Struk dan Nomor Urut Antrean
+                if (order.queueNumber) {
                     setQueueNumber(String(order.queueNumber));
                 }
 
                 // Status Text Logic
-                if (order.status === 'Pending') {
-                    setOrdersAhead(`Antrean ke-${order.queuePosition}`);
+                // FIX 46: PWA QRIS Waiting Payment Guard
+                if (order.status === 'WaitingPayment') {
+                    setOrdersAhead("Menunggu Pembayaran QRIS");
+                    setEstimatedTime(null);
+                } else if (order.status === 'Pending') {
+                    // Cek jika posisinya 1, atau jika orderaheadnya ada
+                    const pos = order.queuePosition ? `Tersisa ${order.queuePosition} Antrean` : `Antrean ke-${order.queueNumber}`;
+                    setOrdersAhead(pos);
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
                     }
@@ -129,7 +135,10 @@ export default function TrackingPage() {
                     if (wa.length >= 8 && wa.length <= 15) setWhatsappNumber(wa);
                 }
             }
-        }).catch(err => { if (process.env.NODE_ENV !== 'production') console.error("Error refreshing data:", err); });
+        }).catch(err => { if (process.env.NODE_ENV !== 'production') console.error("Error refreshing data:", err); })
+            .finally(() => {
+                setIsLoading(false); // Akhiri loading skeleton
+            });
     };
 
     useEffect(() => {
@@ -364,6 +373,16 @@ export default function TrackingPage() {
                     -webkit-font-smoothing: antialiased;
                 }
                 button { cursor: pointer; border: none; outline: none; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+                
+                /* SKELETON ANIMATION */
+                .skeleton-pulse {
+                    animation: pulse 1.5s infinite ease-in-out;
+                    background-color: #E5E7EB;
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
             `}</style>
             <style jsx>{`
                 .page-container {
@@ -713,236 +732,266 @@ export default function TrackingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
             >
-                {/* STATUS CARD */}
-                <div className="card" style={{ marginBottom: 32 }}>
+                {isLoading ? (
+                    <>
+                        {/* SKELETON STATUS CARD */}
+                        <div className="card" style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                            <div className="skeleton-pulse" style={{ width: 160, height: 160, borderRadius: '50%' }}></div>
+                            <div className="skeleton-pulse" style={{ width: '60%', height: 32, borderRadius: 8, marginTop: 8 }}></div>
+                            <div className="skeleton-pulse" style={{ width: '40%', height: 20, borderRadius: 8 }}></div>
+                            <div className="skeleton-pulse" style={{ width: '100%', height: 64, marginTop: 24, borderRadius: 12 }}></div>
+                        </div>
 
-                    {/* Issue 2: Banner Menunggu Konfirmasi */}
-                    {cancellationStatus === 'Requested' && orderStatus !== 'cancelled' && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            style={{
-                                background: '#FFF7ED',
-                                border: '1px solid #FED7AA',
-                                color: '#C2410C',
-                                padding: '12px 16px',
-                                borderRadius: 12,
-                                marginBottom: 24,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 12,
-                                fontSize: 14,
-                                fontWeight: 600
-                            }}
-                        >
-                            <div style={{ // Pulse dot
-                                width: 8, height: 8, background: '#F97316', borderRadius: '50%', boxShadow: '0 0 0 4px #FFEDD5'
-                            }}></div>
-                            Pembatalan menunggu konfirmasi dari kasir
-                        </motion.div>
-                    )}
-                    <div className="status-header">
-                        <div style={{ position: 'relative', width: 160, height: 160, margin: '0 auto 24px auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* SKELETON DETAILS CARD */}
+                        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div className="skeleton-pulse" style={{ width: '40%', height: 24, borderRadius: 8, marginBottom: 8 }}></div>
+                            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                                <div className="skeleton-pulse" style={{ width: 64, height: 64, borderRadius: 12 }}></div>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div className="skeleton-pulse" style={{ width: '80%', height: 20, borderRadius: 4 }}></div>
+                                    <div className="skeleton-pulse" style={{ width: '30%', height: 16, borderRadius: 4 }}></div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
+                                <div className="skeleton-pulse" style={{ width: '40%', height: 20, borderRadius: 4 }}></div>
+                                <div className="skeleton-pulse" style={{ width: '30%', height: 24, borderRadius: 4 }}></div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* STATUS CARD */}
+                        <div className="card" style={{ marginBottom: 32 }}>
 
-                            {/* Animated RGB Gradient Background - Layer 1 (Blur/Glow) */}
-                            <motion.div
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    background: 'conic-gradient(from 0deg, #FF0080, #7928CA, #FF0080)',
-                                    filter: 'blur(20px)',
-                                    opacity: 0.5,
-                                    zIndex: 0,
-                                }}
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            />
+                            {/* Issue 2: Banner Menunggu Konfirmasi */}
+                            {cancellationStatus === 'Requested' && orderStatus !== 'cancelled' && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    style={{
+                                        background: '#FFF7ED',
+                                        border: '1px solid #FED7AA',
+                                        color: '#C2410C',
+                                        padding: '12px 16px',
+                                        borderRadius: 12,
+                                        marginBottom: 24,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 12,
+                                        fontSize: 14,
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    <div style={{ // Pulse dot
+                                        width: 8, height: 8, background: '#F97316', borderRadius: '50%', boxShadow: '0 0 0 4px #FFEDD5'
+                                    }}></div>
+                                    Pembatalan menunggu konfirmasi dari kasir
+                                </motion.div>
+                            )}
+                            <div className="status-header">
+                                <div style={{ position: 'relative', width: 160, height: 160, margin: '0 auto 24px auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 
-                            {/* Animated RGB Gradient Background - Layer 2 (Sharp Ring) */}
-                            <motion.div
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    background: 'conic-gradient(from 0deg, #FF0080, #7928CA, #FF0080)',
-                                    zIndex: 1,
-                                }}
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            />
+                                    {/* Animated RGB Gradient Background - Layer 1 (Blur/Glow) */}
+                                    <motion.div
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            borderRadius: '50%',
+                                            background: 'conic-gradient(from 0deg, #FF0080, #7928CA, #FF0080)',
+                                            filter: 'blur(20px)',
+                                            opacity: 0.5,
+                                            zIndex: 0,
+                                        }}
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    />
 
-                            {/* Inner White Circle (To create the ring effect) */}
-                            <div style={{
-                                position: 'absolute',
-                                top: 6, // 6px thickness
-                                left: 6,
-                                right: 6,
-                                bottom: 6,
-                                background: 'white',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                zIndex: 2,
-                                boxShadow: 'inset 0 4px 6px rgba(0,0,0,0.1)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                                    {orderStatus === 'ready' ? (
-                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{ display: 'block' }}><polyline points="20 6 9 17 4 12" /></svg>
-                                    ) : orderStatus === 'cancelled' ? (
-                                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" style={{ display: 'block' }}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                    ) : orderStatus === 'preparing' ? (
-                                        <motion.svg
-                                            width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" style={{ display: 'block' }}
-                                            animate={{ scale: [1, 1.15, 1] }}
-                                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                        >
-                                            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" />
-                                        </motion.svg>
-                                    ) : (
-                                        <span style={{ fontSize: 72, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block', marginTop: -4 }}>{queueNumber}</span>
+                                    {/* Animated RGB Gradient Background - Layer 2 (Sharp Ring) */}
+                                    <motion.div
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            borderRadius: '50%',
+                                            background: 'conic-gradient(from 0deg, #FF0080, #7928CA, #FF0080)',
+                                            zIndex: 1,
+                                        }}
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    />
+
+                                    {/* Inner White Circle (To create the ring effect) */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 6, // 6px thickness
+                                        left: 6,
+                                        right: 6,
+                                        bottom: 6,
+                                        background: 'white',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        zIndex: 2,
+                                        boxShadow: 'inset 0 4px 6px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                            {orderStatus === 'ready' ? (
+                                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{ display: 'block' }}><polyline points="20 6 9 17 4 12" /></svg>
+                                            ) : orderStatus === 'cancelled' ? (
+                                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" style={{ display: 'block' }}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                            ) : orderStatus === 'preparing' ? (
+                                                <motion.svg
+                                                    width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" style={{ display: 'block' }}
+                                                    animate={{ scale: [1, 1.15, 1] }}
+                                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                                >
+                                                    <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" />
+                                                </motion.svg>
+                                            ) : (
+                                                <span style={{ fontSize: 72, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block', marginTop: -4 }}>{queueNumber}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h2 className="status-label">
+                                    {orderStatus === 'ready' ? "Pesanan Diantar!" :
+                                        orderStatus === 'preparing' ? "Sedang Disiapkan" :
+                                            orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
+                                                "Pesanan Diterima"}
+                                </h2>
+
+                                {estimatedTime && orderStatus !== 'cancelled' && orderStatus !== 'ready' && (
+                                    <div style={{ marginTop: 12, padding: '8px 20px', background: '#F3F4F6', borderRadius: 99, fontSize: 15, fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                        {estimatedTime}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* PROGRESS BAR (UPSCALED) */}
+                            {orderStatus !== 'cancelled' && (
+                                <div className="progress-wrapper">
+                                    <div className="steps-row">
+                                        {/* Step 1 */}
+                                        <div className={`step-item ${['received', 'preparing', 'ready'].includes(orderStatus) ? 'active' : ''} ${['preparing', 'ready'].includes(orderStatus) ? 'completed' : ''}`}>
+                                            <div
+                                                className="step-icon"
+                                            >
+                                                <motion.svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                                    animate={orderStatus === 'received' ? { scale: [1, 1.2, 1] } : {}}
+                                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                                ><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></motion.svg>
+                                            </div>
+                                            <span className="step-label">Diterima</span>
+                                        </div>
+                                        {/* Step 2 */}
+                                        <div className={`step-item ${['preparing', 'ready'].includes(orderStatus) ? 'active' : ''} ${orderStatus === 'ready' ? 'completed' : ''}`}>
+                                            <div
+                                                className="step-icon"
+                                            >
+                                                <motion.svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                                    animate={orderStatus === 'preparing' ? { scale: [1, 1.2, 1] } : {}}
+                                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                                                ><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" /></motion.svg>
+                                            </div>
+                                            <span className="step-label">Disiapkan</span>
+                                        </div>
+                                        {/* Step 3 */}
+                                        <div className={`step-item ${orderStatus === 'ready' ? 'active' : ''} ${orderStatus === 'ready' ? 'completed' : ''}`}>
+                                            <div className="step-icon">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                                            </div>
+                                            <span className="step-label">Diantar</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="progress-bar-container">
+                                        <motion.div
+                                            style={{
+                                                height: '100%',
+                                                background: 'linear-gradient(90deg, #3B82F6, #8B5CF6, #EC4899, #F59E0B, #3B82F6)', // REPEATED FOR FLOW
+                                                backgroundSize: '200% 100%', // DOUBLE SIZE FOR FLOW ANIMATION
+                                                borderRadius: 4,
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                boxShadow: '0 0 12px rgba(139, 92, 246, 0.6)', // GLOW EFFECT
+                                                zIndex: 10
+                                            }}
+                                            initial={{ width: '0%', backgroundPosition: '0% 50%' }}
+                                            animate={{
+                                                width: orderStatus === 'received' ? '15%' :
+                                                    orderStatus === 'preparing' ? '50%' : '100%',
+                                                backgroundPosition: ['0% 50%', '100% 50%'] // FLOWING ANIMATION
+                                            }}
+                                            transition={{
+                                                width: { duration: 0.8 },
+                                                backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* DETAILS CARD (UPSCALED) */}
+                        <div className="card">
+                            <h3 className="section-title">Rincian Order</h3>
+                            <div>
+                                {orderItems.map((item, idx) => (
+                                    <div className="item-row" key={idx}>
+                                        <img src={item.image || '/assets/placeholder.png'} className="item-img" alt={item.name} />
+                                        <div className="item-info">
+                                            <div className="item-name">{item.name}</div>
+                                            <div className="item-meta">
+                                                <span>{item.qty}x</span>
+                                                <span style={{ fontWeight: 600, color: '#111827' }}>{formatRupiah(item.price)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, paddingTop: 24, borderTop: '1px dashed #E5E7EB' }}>
+                                <span style={{ fontSize: 16, color: '#6B7280' }}>Total Pembayaran</span>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{formatRupiah(total)}</div>
+                                    {paymentStatus === 'unpaid' && (
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', background: '#FEF3C7', padding: '4px 10px', borderRadius: 6, display: 'inline-block', marginTop: 4 }}>Belum Dibayar</span>
                                     )}
                                 </div>
                             </div>
-                        </div>
 
-                        <h2 className="status-label">
-                            {orderStatus === 'ready' ? "Pesanan Diantar!" :
-                                orderStatus === 'preparing' ? "Sedang Disiapkan" :
-                                    orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
-                                        "Pesanan Diterima"}
-                        </h2>
-
-                        {estimatedTime && orderStatus !== 'cancelled' && orderStatus !== 'ready' && (
-                            <div style={{ marginTop: 12, padding: '8px 20px', background: '#F3F4F6', borderRadius: 99, fontSize: 15, fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                {estimatedTime}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* PROGRESS BAR (UPSCALED) */}
-                    {orderStatus !== 'cancelled' && (
-                        <div className="progress-wrapper">
-                            <div className="steps-row">
-                                {/* Step 1 */}
-                                <div className={`step-item ${['received', 'preparing', 'ready'].includes(orderStatus) ? 'active' : ''} ${['preparing', 'ready'].includes(orderStatus) ? 'completed' : ''}`}>
-                                    <div
-                                        className="step-icon"
-                                    >
-                                        <motion.svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                                            animate={orderStatus === 'received' ? { scale: [1, 1.2, 1] } : {}}
-                                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                        ><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></motion.svg>
+                            {/* QR REFUND */}
+                            {(orderStatus === 'cancelled' && paymentStatus === 'paid') && (
+                                refundStatus === 'Refunded' ? (
+                                    <div style={{ marginTop: 24, textAlign: 'center', padding: 24, background: '#D1FAE5', borderRadius: 16, border: '1px solid #A7F3D0' }}>
+                                        <div style={{ background: 'white', borderRadius: '50%', width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto', color: '#059669' }}>
+                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        </div>
+                                        <div style={{ fontSize: 18, fontWeight: 700, color: '#065F46', marginBottom: 4 }}>Dana Telah Dikembalikan</div>
+                                        <p style={{ fontSize: 14, color: '#047857', marginTop: 0 }}>Proses refund berhasil.</p>
                                     </div>
-                                    <span className="step-label">Diterima</span>
-                                </div>
-                                {/* Step 2 */}
-                                <div className={`step-item ${['preparing', 'ready'].includes(orderStatus) ? 'active' : ''} ${orderStatus === 'ready' ? 'completed' : ''}`}>
-                                    <div
-                                        className="step-icon"
-                                    >
-                                        <motion.svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                                            animate={orderStatus === 'preparing' ? { scale: [1, 1.2, 1] } : {}}
-                                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                        ><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" /></motion.svg>
+                                ) : (
+                                    <div style={{ marginTop: 24, textAlign: 'center', padding: 20, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
+                                        <div style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 16 }}>Refund Dana</div>
+                                        <div style={{ background: 'white', padding: 12, display: 'inline-block', borderRadius: 12 }}>
+                                            <QRCode value={transactionCode} size={140} />
+                                        </div>
+                                        <p style={{ fontSize: 14, color: '#991B1B', marginTop: 12 }}>Tunjukkan ke kasir untuk refund</p>
                                     </div>
-                                    <span className="step-label">Disiapkan</span>
-                                </div>
-                                {/* Step 3 */}
-                                <div className={`step-item ${orderStatus === 'ready' ? 'active' : ''} ${orderStatus === 'ready' ? 'completed' : ''}`}>
-                                    <div className="step-icon">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                                    </div>
-                                    <span className="step-label">Diantar</span>
-                                </div>
-                            </div>
-
-                            <div className="progress-bar-container">
-                                <motion.div
-                                    style={{
-                                        height: '100%',
-                                        background: 'linear-gradient(90deg, #3B82F6, #8B5CF6, #EC4899, #F59E0B, #3B82F6)', // REPEATED FOR FLOW
-                                        backgroundSize: '200% 100%', // DOUBLE SIZE FOR FLOW ANIMATION
-                                        borderRadius: 4,
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        boxShadow: '0 0 12px rgba(139, 92, 246, 0.6)', // GLOW EFFECT
-                                        zIndex: 10
-                                    }}
-                                    initial={{ width: '0%', backgroundPosition: '0% 50%' }}
-                                    animate={{
-                                        width: orderStatus === 'received' ? '15%' :
-                                            orderStatus === 'preparing' ? '50%' : '100%',
-                                        backgroundPosition: ['0% 50%', '100% 50%'] // FLOWING ANIMATION
-                                    }}
-                                    transition={{
-                                        width: { duration: 0.8 },
-                                        backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* DETAILS CARD (UPSCALED) */}
-                <div className="card">
-                    <h3 className="section-title">Rincian Order</h3>
-                    <div>
-                        {orderItems.map((item, idx) => (
-                            <div className="item-row" key={idx}>
-                                <img src={item.image || '/assets/placeholder.png'} className="item-img" alt={item.name} />
-                                <div className="item-info">
-                                    <div className="item-name">{item.name}</div>
-                                    <div className="item-meta">
-                                        <span>{item.qty}x</span>
-                                        <span style={{ fontWeight: 600, color: '#111827' }}>{formatRupiah(item.price)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, paddingTop: 24, borderTop: '1px dashed #E5E7EB' }}>
-                        <span style={{ fontSize: 16, color: '#6B7280' }}>Total Pembayaran</span>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>{formatRupiah(total)}</div>
-                            {paymentStatus === 'unpaid' && (
-                                <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706', background: '#FEF3C7', padding: '4px 10px', borderRadius: 6, display: 'inline-block', marginTop: 4 }}>Belum Dibayar</span>
+                                )
                             )}
                         </div>
-                    </div>
-
-                    {/* QR REFUND */}
-                    {(orderStatus === 'cancelled' && paymentStatus === 'paid') && (
-                        refundStatus === 'Refunded' ? (
-                            <div style={{ marginTop: 24, textAlign: 'center', padding: 24, background: '#D1FAE5', borderRadius: 16, border: '1px solid #A7F3D0' }}>
-                                <div style={{ background: 'white', borderRadius: '50%', width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto', color: '#059669' }}>
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                </div>
-                                <div style={{ fontSize: 18, fontWeight: 700, color: '#065F46', marginBottom: 4 }}>Dana Telah Dikembalikan</div>
-                                <p style={{ fontSize: 14, color: '#047857', marginTop: 0 }}>Proses refund berhasil.</p>
-                            </div>
-                        ) : (
-                            <div style={{ marginTop: 24, textAlign: 'center', padding: 20, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
-                                <div style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 16 }}>Refund Dana</div>
-                                <div style={{ background: 'white', padding: 12, display: 'inline-block', borderRadius: 12 }}>
-                                    <QRCode value={transactionCode} size={140} />
-                                </div>
-                                <p style={{ fontSize: 14, color: '#991B1B', marginTop: 12 }}>Tunjukkan ke kasir untuk refund</p>
-                            </div>
-                        )
-                    )}
-                </div>
+                    </>
+                )}
             </motion.div>
 
             {/* FOOTER ACTIONS (UPSCALED) */}
