@@ -136,7 +136,7 @@ function QrisContent() {
                         sessionStorage.setItem('post_payment_state', JSON.stringify(finalState));
 
                         setOrderState(finalState);
-                        setOrderId(response.data.id);
+                        setOrderId(response.data.transactionCode); // FIX 40: Map to Transaction Code, not integer ID
                         setAmount(parsedPayload.totalAmount);
                         numericIdRef.current = response.data.id;
                         idParam = response.data.transactionCode;
