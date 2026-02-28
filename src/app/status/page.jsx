@@ -234,6 +234,21 @@ export default function StatusPage() {
         padding-bottom: 24px;
       }
 
+      /* SKELETON ANIMATION */
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: .5;
+        }
+      }
+      .skeleton-box {
+        background-color: #E5E7EB;
+        border-radius: 4px;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
       /* CARD PESANAN */
       .div-3 {
         width:343px;
@@ -464,7 +479,9 @@ export default function StatusPage() {
                 <img src="/assets/kembali.svg" alt="Kembali" />
               </button>
               <h1 className="h">
-                <span className="text-wrapper">Status Pesanan Saya</span>
+                <span className="text-wrapper">
+                  {loading ? "Memuat Status..." : `Pesanan Ke-${orders.process.length + orders.completed.length} Hari Ini`}
+                </span>
               </h1>
             </header>
 
@@ -484,7 +501,34 @@ export default function StatusPage() {
             <section className="main" role="tabpanel">
               {/* LIST */}
               {loading ? (
-                <div style={{ textAlign: 'center', marginTop: 40, color: '#999' }}>Memuat pesanan...</div>
+                <>
+                  {[1, 2, 3].map((skeleton) => (
+                    <article className="div-3" key={`skel-${skeleton}`} style={{ pointerEvents: 'none' }}>
+                      <div className="div-4">
+                        <div className="div-5">
+                          <span className="i-wrapper skeleton-box" style={{ backgroundColor: '#F3F4F6' }}></span>
+                          <div className="div-7">
+                            <div className="skeleton-box" style={{ width: 100, height: 18, borderRadius: 8, marginBottom: 4 }}></div>
+                            <div className="skeleton-box" style={{ width: 60, height: 14, borderRadius: 8 }}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
+                        <div className="skeleton-box" style={{ width: '80%', height: 14, borderRadius: 8 }}></div>
+                        <div className="skeleton-box" style={{ width: '50%', height: 14, borderRadius: 8 }}></div>
+                      </div>
+                      <div className="div-8">
+                        <div className="span-wrapper">
+                          <div className="skeleton-box" style={{ width: 110, height: 24, borderRadius: 9999 }}></div>
+                        </div>
+                        <div className="div-10">
+                          <div className="skeleton-box" style={{ width: 30, height: 12, borderRadius: 4, marginBottom: 2 }}></div>
+                          <div className="skeleton-box" style={{ width: 80, height: 16, borderRadius: 6 }}></div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </>
               ) : (
                 orders[activeTab].map((order) => (
                   <article className="div-3" key={order.id} onClick={() => goToWaitingPage(order)}>

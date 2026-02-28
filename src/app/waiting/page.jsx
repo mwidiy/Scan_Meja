@@ -110,7 +110,8 @@ export default function TrackingPage() {
                     setEstimatedTime(null);
                 } else if (order.status === 'Pending') {
                     // Cek jika posisinya 1, atau jika orderaheadnya ada
-                    const pos = order.queuePosition ? `Tersisa ${order.queuePosition} Antrean` : `Antrean ke-${order.queueNumber}`;
+                    // TAHAP 47: ONE TRUE QUEUE FIX (Copywriting)
+                    const pos = order.queuePosition ? `Sisa ${order.queuePosition} Antrean di Depan Anda` : `Pesanan Diterima`;
                     setOrdersAhead(pos);
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
@@ -854,7 +855,10 @@ export default function TrackingPage() {
                                                     <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" />
                                                 </motion.svg>
                                             ) : (
-                                                <span style={{ fontSize: 72, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block', marginTop: -4 }}>{queueNumber}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280', marginBottom: -4 }}>NO. PESANAN</span>
+                                                    <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block' }}>{queueNumber || '-'}</span>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -1270,58 +1274,60 @@ export default function TrackingPage() {
                 )}
             </AnimatePresence>
             {/* WA UNAVAILABLE MODAL */}
-            {showNoWaModal && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 10000,
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px'
-                }}
-                    onClick={() => setShowNoWaModal(false)}
-                >
+            {
+                showNoWaModal && (
                     <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '24px',
-                        padding: '32px 24px',
-                        maxWidth: '320px',
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 10000,
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '24px'
                     }}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={() => setShowNoWaModal(false)}
                     >
-                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱❌</div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
-                            WhatsApp Tidak Tersedia
-                        </h3>
-                        <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: '1.6', marginBottom: '24px' }}>
-                            Mohon maaf, penjual belum menyediakan nomor WhatsApp untuk dihubungi.
-                        </p>
-
-                        <button
-                            onClick={() => setShowNoWaModal(false)}
-                            style={{
-                                width: '100%',
-                                padding: '14px',
-                                borderRadius: '16px',
-                                backgroundColor: '#1E3A5F', // Navy
-                                color: 'white',
-                                fontWeight: '700',
-                                fontSize: '15px',
-                                border: 'none',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 6px rgba(30, 58, 95, 0.3)'
-                            }}
+                        <div style={{
+                            backgroundColor: 'white',
+                            borderRadius: '24px',
+                            padding: '32px 24px',
+                            maxWidth: '320px',
+                            width: '100%',
+                            textAlign: 'center',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        }}
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            Oke, Mengerti
-                        </button>
+                            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱❌</div>
+                            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '12px' }}>
+                                WhatsApp Tidak Tersedia
+                            </h3>
+                            <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: '1.6', marginBottom: '24px' }}>
+                                Mohon maaf, penjual belum menyediakan nomor WhatsApp untuk dihubungi.
+                            </p>
+
+                            <button
+                                onClick={() => setShowNoWaModal(false)}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    backgroundColor: '#1E3A5F', // Navy
+                                    color: 'white',
+                                    fontWeight: '700',
+                                    fontSize: '15px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 6px rgba(30, 58, 95, 0.3)'
+                                }}
+                            >
+                                Oke, Mengerti
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div >
     );
 }
