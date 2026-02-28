@@ -216,6 +216,11 @@ function QrisContent() {
         } catch (e) {
             if (process.env.NODE_ENV !== 'production') console.error("Parse Error", e);
         }
+    }, [searchParams]); // REMOVE CALLBACKS FROM DEPS to prevent loops
+
+    // FIX 41: Independent Timer & Socket (Separated from Optimistic Checkout's early return)
+    useEffect(() => {
+        if (!orderId) return; // Wait until order is established
 
         // Timer
         const interval = setInterval(() => {
@@ -240,16 +245,13 @@ function QrisContent() {
 
         socket.on('connect', () => {
             if (process.env.NODE_ENV !== 'production') console.log("Socket connected:", socket.id);
-            if (idParam) {
-                // Subscribe to specific transaction updates
-                socket.emit('join_room', idParam);
-            }
+            socket.emit('join_room', orderId); // Emit ID explicitly
         });
 
         socket.on('order_update', (data) => {
             if (process.env.NODE_ENV !== 'production') console.log("Socket Update Received:", data);
 
-            const isMyOrder = String(data.transactionCode) === String(idParam);
+            const isMyOrder = String(data.transactionCode) === String(orderId);
             // Check broadly for success status
             const status = (data.status || '').toLowerCase();
             const isPaidStatus = status === 'paid' || status === 'completed' || status === 'settlement' || status === 'success';
@@ -263,7 +265,7 @@ function QrisContent() {
                 // Clear backup immediately
                 localStorage.removeItem('qris_backup');
 
-                const targetId = numericIdRef.current || idParam;
+                const targetId = numericIdRef.current || orderId;
 
                 // Delay slightly just to show check mark (UX) then GO
                 setTimeout(() => {
@@ -276,7 +278,7 @@ function QrisContent() {
             clearInterval(interval);
             socket.disconnect();
         };
-    }, [searchParams]); // REMOVE CALLBACKS FROM DEPS to prevent loops
+    }, [orderId, router]); // Reacts when orderId is fully generated
 
     // TIMER EXPIRY LOGIC
     useEffect(() => {
