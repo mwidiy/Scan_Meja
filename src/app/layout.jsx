@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if (process.env.NODE_ENV === 'production') {
+              if ('${process.env.NODE_ENV}' === 'production') {
                 console.log = function() {};
                 console.warn = function() {};
                 console.error = function() {};

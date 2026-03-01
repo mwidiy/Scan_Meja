@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { io } from 'socket.io-client';
+import { motion } from 'framer-motion';
 
 import { getProducts, getCategories, getBanners, getImageUrl, getDynamicUrl } from '../../services/api';
 import ProductDetailModal from './ProductDetailModal';
