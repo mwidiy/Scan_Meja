@@ -601,7 +601,7 @@ export default function HomePixelPerfect() {
         /* Menu Grid */
         .menu-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-            padding: 0 22px 140px 22px; /* Ditinggikan untuk mengakomodasi 3 FAB */
+            padding: 0 22px 60px 22px; /* Disesuaikan agar tidak seperti footer raksasa */
         }
         .menu-card {
             background: white; border-radius: 22px; padding: 10px 10px 12px;
@@ -1000,7 +1000,10 @@ export default function HomePixelPerfect() {
                         className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
                         onClick={() => router.push('/status')}
                     >
-                        <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        {/* Solid White Bell Icon */}
+                        <svg className="w-[26px] h-[26px]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+                        </svg>
                     </div>
                 </div>
             </div>
