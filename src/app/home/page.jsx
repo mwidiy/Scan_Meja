@@ -562,7 +562,7 @@ export default function HomePixelPerfect() {
             width: 100%; max-width: 414px; background-color: #F9FAFB;
             min-height: 100vh; margin: 0 auto; position: relative;
             box-shadow: 0 0 0 1px rgba(15,23,42,0.03), var(--shadow-md);
-            display: flex; flex-direction: column;
+            overflow: hidden; display: flex; flex-direction: column;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -602,7 +602,6 @@ export default function HomePixelPerfect() {
         .menu-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
             padding: 0 22px 140px 22px; /* Ditinggikan untuk mengakomodasi 3 FAB */
-            background-color: #F9FAFB;
         }
         .menu-card {
             background: white; border-radius: 22px; padding: 10px 10px 12px;
@@ -946,66 +945,63 @@ export default function HomePixelPerfect() {
                         })}
                     </main>
                 </div>
-            </div>
 
-            <ProductDetailModal
-                product={selectedProduct}
-                onClose={() => setSelectedProduct(null)}
-                onChangeSelectedQty={(delta) => handleModalChangeQty(delta)}
-                onManualInput={(val) => handleModalManualQty(val)}
-                onAddToCart={() => handleModalAddToCart()}
-            />
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    onChangeSelectedQty={(delta) => handleModalChangeQty(delta)}
+                    onManualInput={(val) => handleModalManualQty(val)}
+                    onAddToCart={() => handleModalAddToCart()}
+                />
 
-            {/* TAHAP 57: Tiga Tombol Mengambang (FABs) ditata secara vertikal */}
-            <div className="fixed bottom-[24px] right-[20px] flex flex-col gap-[16px] z-40">
+                {/* TAHAP 57: Tiga Tombol Mengambang (FABs) ditata secara vertikal */}
+                <div className="fixed bottom-[24px] right-[20px] flex flex-col gap-[16px] z-40">
 
-                {/* 1. Tombol Bantuan (CS) - Tahap 58: Pindah rute */}
-                <div
-                    className="w-[56px] h-[56px] rounded-full bg-[#2D3949] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
-                    onClick={() => router.push('/bantuan')}
-                >
-                    <img src="/assets/cs.svg" alt="CS" className="w-[26px] h-[26px] object-contain" />
-                </div>
-
-                {/* 2. Tombol Keranjang */}
-                <div
-                    className="w-[56px] h-[56px] rounded-full bg-[#FACC15] text-[#1F2937] flex justify-center items-center shadow-[0_10px_25px_rgba(250,204,21,0.3)] cursor-pointer hover:-translate-y-1 transition-transform relative border border-transparent"
-                    onClick={() => {
-                        const items = Object.entries(cart).map(([key, qty]) => {
-                            const idNum = Number(key);
-                            const p = products.find(x => x.id === idNum);
-                            const safeQty = Math.min(Math.max(parseInt(qty) || 0, 0), 99);
-                            return {
-                                id: p?.id ?? idNum,
-                                name: p?.name ?? 'Item',
-                                price: p?.price ?? 0,
-                                qty: safeQty,
-                                image: p?.image ?? null
-                            };
-                        }).filter(it => it.qty > 0 && Number.isFinite(it.price) && it.price >= 0);
-
-                        const subtotal = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
-                        const state = { items, subtotal, orderType: 'dinein' };
-
-                        try { sessionStorage.setItem('checkout_state', JSON.stringify(state)); } catch (e) { }
-                        router.push('/checkout');
-                    }}
-                >
-                    <div className={`absolute -top-[6px] -right-[6px] bg-[#EF4444] text-white text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-                        {totalItemsInCart}
+                    {/* 1. Tombol Bantuan (CS) - Tahap 58: Pindah rute */}
+                    <div
+                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
+                        onClick={() => router.push('/bantuan')}
+                    >
+                        <img src="/assets/cs.svg" alt="CS" className="w-[26px] h-[26px] object-contain" />
                     </div>
-                    <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                </div>
 
-                {/* 3. Tombol Notification / Status */}
-                <div
-                    className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
-                    onClick={() => router.push('/status')}
-                >
-                    {/* Solid White Bell Icon */}
-                    <svg className="w-[26px] h-[26px] text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path fillRule="evenodd" d="M12 2.25A6.75 6.75 0 005.25 9v.756a8.12 8.12 0 01-1.319 4.365l-.814 1.222a1.5 1.5 0 001.25 2.336h.634a3.753 3.753 0 007 0h.634a1.5 1.5 0 001.25-2.336l-.814-1.222a8.12 8.12 0 01-1.319-4.365V9A6.75 6.75 0 0012 2.25zM9.75 19.5c0 1.242 1.008 2.25 2.25 2.25s2.25-1.008 2.25-2.25h-4.5z" clipRule="evenodd" />
-                    </svg>
+                    {/* 2. Tombol Keranjang */}
+                    <div
+                        className="w-[56px] h-[56px] rounded-full bg-[#FACC15] text-[#1F2937] flex justify-center items-center shadow-[0_10px_25px_rgba(250,204,21,0.3)] cursor-pointer hover:-translate-y-1 transition-transform relative border border-transparent"
+                        onClick={() => {
+                            const items = Object.entries(cart).map(([key, qty]) => {
+                                const idNum = Number(key);
+                                const p = products.find(x => x.id === idNum);
+                                const safeQty = Math.min(Math.max(parseInt(qty) || 0, 0), 99);
+                                return {
+                                    id: p?.id ?? idNum,
+                                    name: p?.name ?? 'Item',
+                                    price: p?.price ?? 0,
+                                    qty: safeQty,
+                                    image: p?.image ?? null
+                                };
+                            }).filter(it => it.qty > 0 && Number.isFinite(it.price) && it.price >= 0);
+
+                            const subtotal = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
+                            const state = { items, subtotal, orderType: 'dinein' };
+
+                            try { sessionStorage.setItem('checkout_state', JSON.stringify(state)); } catch (e) { }
+                            router.push('/checkout');
+                        }}
+                    >
+                        <div className={`absolute -top-[6px] -right-[6px] bg-[#EF4444] text-white text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+                            {totalItemsInCart}
+                        </div>
+                        <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+
+                    {/* 3. Tombol Notification / Status */}
+                    <div
+                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
+                        onClick={() => router.push('/status')}
+                    >
+                        <img src="/assets/lonceng.svg" alt="Status" className="w-[26px] h-[26px] object-contain" />
+                    </div>
                 </div>
             </div>
         </>
