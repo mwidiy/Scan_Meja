@@ -110,8 +110,10 @@ export default function TrackingPage() {
                     setEstimatedTime(null);
                 } else if (order.status === 'Pending') {
                     // Cek jika posisinya 1, atau jika orderaheadnya ada
-                    // TAHAP 47: ONE TRUE QUEUE FIX (Copywriting)
-                    const pos = order.queuePosition ? `Sisa ${order.queuePosition} Antrean di Depan Anda` : `Pesanan Diterima`;
+                    // TAHAP 48 Hotfix: Mathematical adjustment for Queue Position
+                    // Jika queuePosition 1, berarti antrean di depan adalah 0 (Giliran dia)
+                    const peopleAhead = order.queuePosition && order.queuePosition > 0 ? order.queuePosition - 1 : 0;
+                    const pos = peopleAhead === 0 ? `Giliran Anda Selanjutnya!` : `Sisa ${peopleAhead} Antrean di Depan Anda`;
                     setOrdersAhead(pos);
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
