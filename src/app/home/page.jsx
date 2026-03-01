@@ -79,6 +79,10 @@ export default function HomePixelPerfect() {
     const [customerTable, setCustomerTable] = useState(null);
     const [isSearchMode, setIsSearchMode] = useState(false);
 
+    // TAHAP 57: Compliance Help Drawer State
+    const [isHelpDrawerOpen, setIsHelpDrawerOpen] = useState(false);
+    const [whatsappNumber, setWhatsappNumber] = useState(null);
+
     // --- HARDWARE BACK BUTTON & SEARCH LOGIC ---
     useEffect(() => {
         const handlePopState = () => {
@@ -118,6 +122,10 @@ export default function HomePixelPerfect() {
             const storeRes = await import('../../services/api').then(mod => mod.getStore(sid));
             if (storeRes && storeRes.success) {
                 setStore(storeRes.data);
+                // TAHAP 57: Simpan WA untuk Pusat Bantuan
+                if (storeRes.data.phone) {
+                    setWhatsappNumber(storeRes.data.phone);
+                }
             }
         } catch (error) {
             console.error('Error fetching store:', error);
@@ -592,7 +600,7 @@ export default function HomePixelPerfect() {
         /* Menu Grid */
         .menu-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-            padding: 0 22px 96px 22px;
+            padding: 0 22px 140px 22px; /* Ditinggikan untuk mengakomodasi 3 FAB */
         }
         .menu-card {
             background: white; border-radius: 22px; padding: 10px 10px 12px;
@@ -937,15 +945,40 @@ export default function HomePixelPerfect() {
                     </main>
                 </div>
 
-                {/* FABs */}
-                <div className="fab-container">
+                <ProductDetailModal
+                    product={selectedProduct}
+                    onClose={() => setSelectedProduct(null)}
+                    onChangeSelectedQty={(delta) => handleModalChangeQty(delta)}
+                    onManualInput={(val) => handleModalManualQty(val)}
+                    onAddToCart={() => handleModalAddToCart()}
+                />
+
+                {/* TAHAP 57: Tiga Tombol Mengambang (FABs) ditata secara vertikal */}
+                <div className="fixed bottom-[24px] right-[20px] flex flex-col gap-[16px] z-40">
+
+                    {/* 1. Tombol Bantuan (CS) */}
                     <div
-                        className="fab fab-cart relative"
+                        className="w-[52px] h-[52px] rounded-full bg-white text-[#111827] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100"
+                        onClick={() => setIsHelpDrawerOpen(true)}
+                    >
+                        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+
+                    {/* 2. Tombol Notification / Status */}
+                    <div
+                        className="w-[52px] h-[52px] rounded-full bg-white text-[#111827] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100"
+                        onClick={() => router.push('/status')}
+                    >
+                        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    </div>
+
+                    {/* 3. Tombol Keranjang */}
+                    <div
+                        className="w-[56px] h-[56px] rounded-full bg-[#111827] text-white flex justify-center items-center shadow-[0_10px_25px_rgba(17,24,39,0.3)] cursor-pointer hover:-translate-y-1 transition-transform relative"
                         onClick={() => {
                             const items = Object.entries(cart).map(([key, qty]) => {
                                 const idNum = Number(key);
                                 const p = products.find(x => x.id === idNum);
-                                // Security: Validate qty is a reasonable number
                                 const safeQty = Math.min(Math.max(parseInt(qty) || 0, 0), 99);
                                 return {
                                     id: p?.id ?? idNum,
@@ -959,32 +992,70 @@ export default function HomePixelPerfect() {
                             const subtotal = items.reduce((s, it) => s + (it.price || 0) * it.qty, 0);
                             const state = { items, subtotal, orderType: 'dinein' };
 
-                            // Security: Use sessionStorage instead of URL for state transfer
                             try { sessionStorage.setItem('checkout_state', JSON.stringify(state)); } catch (e) { }
                             router.push('/checkout');
                         }}
                     >
-                        <div className={`cart-badge ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+                        <div className={`absolute -top-[6px] -right-[6px] bg-[#FACC15] text-[#111827] text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
                             {totalItemsInCart}
                         </div>
                         <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
-
-                    <div
-                        className="fab fab-notif"
-                        onClick={() => router.push('/status')}
-                    >
-                        <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
                 </div>
 
-                <ProductDetailModal
-                    product={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
-                    onChangeSelectedQty={(delta) => handleModalChangeQty(delta)}
-                    onManualInput={(val) => handleModalManualQty(val)}
-                    onAddToCart={() => handleModalAddToCart()}
-                />
+                {/* TAHAP 57: HELP DRAWER MODAL */}
+                {isHelpDrawerOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setIsHelpDrawerOpen(false)}>
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white w-full sm:max-w-[400px] rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl pb-10 sm:pb-6"
+                        >
+                            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Pusat Bantuan</h2>
+                            <p className="text-gray-500 text-sm mb-6">Ada kendala dengan pesanan atau pembayaran Anda?</p>
+
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (whatsappNumber) {
+                                            const message = encodeURIComponent("Halo Admin, saya mau bertanya terkait pesanan saya dari aplikasi Meja.");
+                                            window.open(`https://wa.me/${whatsappNumber.startsWith('0') ? '62' + whatsappNumber.substring(1) : whatsappNumber}?text=${message}`, '_blank');
+                                        } else {
+                                            alert("Nomor WhatsApp restoran belum tersedia.");
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 font-semibold">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.573-10.564 5.824.001 10.566 4.746 10.566 10.564-.001 5.827-4.739 10.566-10.563 10.566z"></path></svg>
+                                        Hubungi Kasir via WhatsApp
+                                    </div>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+
+                                <button
+                                    onClick={() => router.push('/legal/tnc')}
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
+                                >
+                                    <div className="font-semibold">Syarat & Ketentuan Layanan</div>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+
+                                <button
+                                    onClick={() => router.push('/legal/privacy')}
+                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
+                                >
+                                    <div className="font-semibold">Kebijakan Privasi Data</div>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
             </div>
         </>
     );
