@@ -857,7 +857,7 @@ export default function TrackingPage() {
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                                     <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280', marginBottom: -4 }}>NO. PESANAN</span>
-                                                    <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block' }}>{queueNumber || '-'}</span>
+                                                    <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block' }}>{(!queueNumber || queueNumber === '0' || queueNumber === 0) ? '-' : queueNumber}</span>
                                                 </div>
                                             )}
                                         </div>
