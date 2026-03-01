@@ -36,10 +36,20 @@ export default function StatusPage() {
       const json = await getOrdersByBatch(history);
 
       if (json.success) {
-        const processList = [];
-        const completedList = [];
+        // TAHAP 50: Re-indexing historical order based on creation time
+        // 1. Sort all orders chronologically (oldest first) to give them a true "History Number"
+        const sortedAll = [...json.data].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-        json.data.forEach(order => {
+        // 2. Map and attach their true index (1, 2, 3...)
+        const mappedData = sortedAll.map((order, index) => ({
+          ...order,
+          historicalIndex: index + 1 // "Pesanan #1", "Pesanan #2"
+        }));
+
+        let processList = [];
+        let completedList = [];
+
+        mappedData.forEach(order => {
           const isCompleted = order.status === 'Completed' || order.status === 'Ready' || order.status === 'Cancelled';
           if (isCompleted) {
             completedList.push(order);
@@ -47,6 +57,13 @@ export default function StatusPage() {
             processList.push(order);
           }
         });
+
+        // TAHAP 50: Special Sorting
+        // "Sedang Diproses" -> First In First Out (Oldest on top) -> Sort ASC
+        processList.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        // "Selesai" -> Last In First Out (Newest on top) -> Sort DESC
+        completedList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         setOrders({
           process: processList,
@@ -480,7 +497,7 @@ export default function StatusPage() {
               </button>
               <h1 className="h">
                 <span className="text-wrapper">
-                  {loading ? "Memuat Status..." : `Pesanan Ke-${orders.process.length + orders.completed.length} Hari Ini`}
+                  {loading ? "Memuat Status..." : `Status Pesanan Saya`}
                 </span>
               </h1>
             </header>
@@ -538,7 +555,7 @@ export default function StatusPage() {
                           <img src="/assets/Card_Icon.svg" alt="" />
                         </span>
                         <div className="div-7">
-                          <h2 className="text-wrapper-4">Pesanan #{String(order.queueNumber || order.id).replace(/[^a-zA-Z0-9\-_]/g, '')}</h2>
+                          <h2 className="text-wrapper-4">Pesanan #{order.historicalIndex}</h2>
                           {order.createdAt && (
                             <time className="text-wrapper-5">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
                           )}
