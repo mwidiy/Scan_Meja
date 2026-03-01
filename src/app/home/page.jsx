@@ -957,10 +957,10 @@ export default function HomePixelPerfect() {
                 {/* TAHAP 57: Tiga Tombol Mengambang (FABs) ditata secara vertikal */}
                 <div className="fixed bottom-[24px] right-[20px] flex flex-col gap-[16px] z-40">
 
-                    {/* 1. Tombol Bantuan (CS) */}
+                    {/* 1. Tombol Bantuan (CS) - Tahap 58: Pindah rute */}
                     <div
                         className="w-[52px] h-[52px] rounded-full bg-white text-[#111827] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100"
-                        onClick={() => setIsHelpDrawerOpen(true)}
+                        onClick={() => router.push('/bantuan')}
                     >
                         <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
@@ -1003,60 +1003,6 @@ export default function HomePixelPerfect() {
                         <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                 </div>
-
-                {/* TAHAP 57: HELP DRAWER MODAL */}
-                {isHelpDrawerOpen && (
-                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setIsHelpDrawerOpen(false)}>
-                        <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white w-full sm:max-w-[400px] rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl pb-10 sm:pb-6"
-                        >
-                            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-2">Pusat Bantuan</h2>
-                            <p className="text-gray-500 text-sm mb-6">Ada kendala dengan pesanan atau pembayaran Anda?</p>
-
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={() => {
-                                        if (whatsappNumber) {
-                                            const message = encodeURIComponent("Halo Admin, saya mau bertanya terkait pesanan saya dari aplikasi Meja.");
-                                            window.open(`https://wa.me/${whatsappNumber.startsWith('0') ? '62' + whatsappNumber.substring(1) : whatsappNumber}?text=${message}`, '_blank');
-                                        } else {
-                                            alert("Nomor WhatsApp restoran belum tersedia.");
-                                        }
-                                    }}
-                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3 font-semibold">
-                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.573-10.564 5.824.001 10.566 4.746 10.566 10.564-.001 5.827-4.739 10.566-10.563 10.566z"></path></svg>
-                                        Hubungi Kasir via WhatsApp
-                                    </div>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-
-                                <button
-                                    onClick={() => router.push('/legal/tnc')}
-                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
-                                >
-                                    <div className="font-semibold">Syarat & Ketentuan Layanan</div>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-
-                                <button
-                                    onClick={() => router.push('/legal/privacy')}
-                                    className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 text-gray-700 hover:bg-gray-100 transition-colors"
-                                >
-                                    <div className="font-semibold">Kebijakan Privasi Data</div>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
             </div>
         </>
     );
