@@ -109,9 +109,8 @@ export default function TrackingPage() {
                     setOrdersAhead("Menunggu Pembayaran QRIS");
                     setEstimatedTime(null);
                 } else if (order.status === 'Pending') {
-                    // Cek jika posisinya 1, atau jika orderaheadnya ada
-                    // TAHAP 48 Hotfix: Mathematical adjustment for Queue Position
-                    // Jika queuePosition 1, berarti antrean di depan adalah 0 (Giliran dia)
+                    // TAHAP 49: NEW QUEUE PHILOSOPHY (Active Pending Count)
+                    // Jika queuePosition 1, berarti dia adalah satu-satunya orang di antrean, sisa di depan adalah 0.
                     const peopleAhead = order.queuePosition && order.queuePosition > 0 ? order.queuePosition - 1 : 0;
                     const pos = peopleAhead === 0 ? `Giliran Anda Selanjutnya!` : `Sisa ${peopleAhead} Antrean di Depan Anda`;
                     setOrdersAhead(pos);
