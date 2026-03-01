@@ -35,7 +35,8 @@ export default function ReceiptPage() {
                         status: 'unpaid',
                         storeName: 'Memproses...'
                     }));
-                    setIsLoading(false); // END LOADING INSTANTLY
+                    // TAHAP 52 FIX: Jangan setIsLoading(false) di sini. Biarkan loading muter.
+                    // setIsLoading(false); // END LOADING INSTANTLY
 
                     // 2. Background API Execution
                     const executeOrder = async () => {
@@ -53,6 +54,9 @@ export default function ReceiptPage() {
 
                             // Rehydrate full data from server to get accurate names and configurations
                             fetchOrderByCode(response.data.transactionCode);
+
+                            // TAHAP 52 FIX: Loading selesai setelah server mengembalikan ID trx asli
+                            setIsLoading(false);
 
                         } catch (err) {
                             if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
@@ -107,6 +111,7 @@ export default function ReceiptPage() {
                     const safeStoreName = String(parsed.storeName || '').substring(0, 50).replace(/[<>&"']/g, '');
 
                     if (safeItems.length > 0) {
+                        // TAHAP 52 FIX: Berikan jeda estetik 800ms agar animasi Premium Bouncing Dots sempat tertayang
                         setTimeout(() => {
                             setOrderData(prev => ({
                                 ...prev,
@@ -120,7 +125,7 @@ export default function ReceiptPage() {
                                 storeName: safeStoreName
                             }));
                             setIsLoading(false); // END LOADING
-                        }, 0);
+                        }, 800);
                         return; // Done if items exist
                     }
 
