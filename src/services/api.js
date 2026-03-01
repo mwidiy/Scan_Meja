@@ -24,7 +24,9 @@ export const getProducts = async (storeId) => {
     try {
         const query = storeId ? `?storeId=${storeId}&t=${Date.now()}` : `?t=${Date.now()}`;
         if (process.env.NODE_ENV !== 'production') console.log("🔍 [Debug] Fetching Products:", `${API_URL}/api/products${query}`);
-        const res = await fetch(`${API_URL}/api/products${query}`, { cache: 'no-store' });
+
+        // TAHAP 53: ISR Caching (5 Mins) -> Prevents Backend Database overload on Free Tier
+        const res = await fetch(`${API_URL}/api/products${query}`, { next: { revalidate: 300 } });
         if (!res.ok) {
             throw new Error(`Failed to fetch products: ${res.statusText}`);
         }
@@ -39,7 +41,8 @@ export const getCategories = async (storeId) => {
     const API_URL = getDynamicUrl();
     try {
         const query = storeId ? `?storeId=${storeId}` : '';
-        const res = await fetch(`${API_URL}/api/categories${query}`, { cache: 'no-store' });
+        // TAHAP 53: ISR Caching (5 Mins)
+        const res = await fetch(`${API_URL}/api/categories${query}`, { next: { revalidate: 300 } });
         if (!res.ok) {
             throw new Error(`Failed to fetch categories: ${res.statusText}`);
         }
@@ -54,7 +57,8 @@ export const getBanners = async (storeId) => {
     const API_URL = getDynamicUrl();
     try {
         const query = storeId ? `&storeId=${storeId}` : '';
-        const res = await fetch(`${API_URL}/api/banners?status=active${query}`, { cache: 'no-store' });
+        // TAHAP 53: ISR Caching (5 Mins)
+        const res = await fetch(`${API_URL}/api/banners?status=active${query}`, { next: { revalidate: 300 } });
         if (!res.ok) {
             throw new Error(`Failed to fetch banners: ${res.statusText}`);
         }

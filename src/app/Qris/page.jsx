@@ -237,8 +237,9 @@ function QrisContent() {
         const socket = io(getDynamicUrl(), {
             transports: ['websocket', 'polling'],
             reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000,
+            // TAHAP 53: Anti-DDoS Server
+            reconnectionAttempts: 10, // Don't try infinity
+            reconnectionDelay: 5000,  // Wait 5 seconds between tries (give Koyeb time to breathe)
             timeout: 20000,
             forceNew: true,
         });
@@ -375,6 +376,9 @@ function QrisContent() {
         if (!orderId || isPaid || !amount || isExpired) return;
 
         const checkStatus = async () => {
+            // TAHAP 53: Throttling Polling in Background Tab
+            if (document.hidden) return; // Do not poll if user is looking at WhatsApp/TikTok
+
             try {
                 const API_URL = getDynamicUrl();
                 const res = await fetch(`${API_URL}/api/payment/check-status/${orderId}?amount=${amount}`);

@@ -225,8 +225,9 @@ export default function TrackingPage() {
         const socket = io(getDynamicUrl(), {
             transports: ['websocket', 'polling'],
             reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000,
+            // TAHAP 53: Anti-DDoS Server
+            reconnectionAttempts: 10,
+            reconnectionDelay: 5000, // 5s breathe room for Koyeb when waking up
             timeout: 20000
         });
 
@@ -260,6 +261,8 @@ export default function TrackingPage() {
         });
 
         const pollInterval = setInterval(() => {
+            // TAHAP 53: Throttling Polling in Background Tab
+            if (document.hidden) return; // Do not poll if user is looking at WhatsApp/TikTok
             if (currentCode) refreshOrderData(currentCode);
         }, 15000);
 
