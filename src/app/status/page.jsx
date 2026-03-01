@@ -10,6 +10,16 @@ export default function StatusPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // TAHAP 56: STALE-WHILE-REVALIDATE CACHE (0ms Rent time display)
+    try {
+      const cachedStr = localStorage.getItem('cached_status_orders');
+      if (cachedStr) {
+        const cachedOrders = JSON.parse(cachedStr);
+        setOrders(cachedOrders);
+        setLoading(false); // Render Instan
+      }
+    } catch (e) { }
+
     fetchOrders();
   }, []);
 
@@ -69,6 +79,14 @@ export default function StatusPage() {
           process: processList,
           completed: completedList
         });
+
+        // TAHAP 56: Simpan memori terbaru ke HP Pelanggan
+        try {
+          localStorage.setItem('cached_status_orders', JSON.stringify({
+            process: processList,
+            completed: completedList
+          }));
+        } catch (e) { }
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') console.error("Error fetching status:", error);

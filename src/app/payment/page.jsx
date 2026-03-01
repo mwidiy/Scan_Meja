@@ -152,6 +152,8 @@ export default function PaymentPage() {
             // 2. Set strict payload transfer to the next page
             try {
                 sessionStorage.setItem('pending_order_payload', JSON.stringify(payload));
+                // TAHAP 56: Ultra-Local State Hydration (Save Full Detail Items for 0ms Rendering)
+                sessionStorage.setItem('optimistic_frontend_items', JSON.stringify(orderState.items));
             } catch (e) { }
 
             // 3. Navigate instantly (0 latency API block)

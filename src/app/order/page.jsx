@@ -20,12 +20,29 @@ export default function ReceiptPage() {
                 if (pendingPayloadRaw) {
                     const parsedPayload = JSON.parse(pendingPayloadRaw);
 
+                    // TAHAP 56: ZERO LATENCY LOKAL RAM
+                    let optItems = [];
+                    try {
+                        const optRaw = sessionStorage.getItem('optimistic_frontend_items');
+                        if (optRaw) {
+                            const parsedOpt = JSON.parse(optRaw);
+                            if (Array.isArray(parsedOpt)) {
+                                optItems = parsedOpt;
+                            }
+                        }
+                    } catch (e) { }
+
                     // 1. Instant Optimistic UI Render
                     setOrderData(prev => ({
                         ...prev,
                         id: 'Memproses...', // Temporary Loading ID
                         transactionCode: 'Memproses...',
-                        items: parsedPayload.items.map(it => ({
+                        items: optItems.length > 0 ? optItems.map(it => ({
+                            name: it.name || `Produk ID: ${it.id}`,
+                            price: it.price,
+                            qty: it.qty,
+                            image: it.image || ''
+                        })) : parsedPayload.items.map(it => ({
                             name: `Produk ID: ${it.productId}`, // Fallback if name not passed
                             price: it.price,
                             qty: it.quantity
@@ -111,8 +128,13 @@ export default function ReceiptPage() {
                     const safeStoreName = String(parsed.storeName || '').substring(0, 50).replace(/[<>&"']/g, '');
 
                     if (safeItems.length > 0) {
-                        // TAHAP 52 FIX: Berikan jeda estetik 800ms agar animasi Premium Bouncing Dots sempat tertayang
-                        setTimeout(() => {
+                        // TAHAP 56 FIX: Bypass jeda estetik 800ms karena kita ingin 0ms render RAM
+                        let isInstaOpt = false;
+                        try {
+                            if (sessionStorage.getItem('optimistic_frontend_items')) isInstaOpt = true;
+                        } catch (e) { }
+
+                        const renderResi = () => {
                             setOrderData(prev => ({
                                 ...prev,
                                 id: id || prev.id || `MP${Date.now()}`, // Fallback if needed
@@ -125,7 +147,13 @@ export default function ReceiptPage() {
                                 storeName: safeStoreName
                             }));
                             setIsLoading(false); // END LOADING
-                        }, 800);
+                        };
+
+                        if (isInstaOpt) {
+                            renderResi(); // 0ms
+                        } else {
+                            setTimeout(renderResi, 800); // Fallback
+                        }
                         return; // Done if items exist
                     }
 

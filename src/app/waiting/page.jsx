@@ -187,7 +187,11 @@ export default function TrackingPage() {
                         ...it,
                         name: it.name ? String(it.name).replace(/[<>&"']/g, '') : 'Item'
                     }));
-                    setTimeout(() => setOrderItems(safeItems), 0);
+                    setTimeout(() => {
+                        setOrderItems(safeItems);
+                        // TAHAP 56: Bantai Skeleton karena data LOKAL udah masuk!
+                        if (safeItems.length > 0) setIsLoading(false);
+                    }, 0);
                 }
                 if (parsed.queueNumber) setTimeout(() => setQueueNumber(String(parsed.queueNumber).substring(0, 10).replace(/[^0-9\-]/g, '')), 0);
 
