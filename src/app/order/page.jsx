@@ -332,15 +332,34 @@ export default function ReceiptPage() {
         .store-footer .store-label { font-size:12px; color:var(--text-sub); margin-bottom: 2px;}
         .store-footer .store-name { font-size:16px; font-weight:700; color:#1F2937; }
 
-        /* SKELETON ANIMATION */
-        .skeleton-pulse {
-            animation: pulse 1.5s infinite ease-in-out;
-            background-color: #E5E7EB;
-            border-radius: 4px;
+        /* TAHAP 51: BOUNCING DOTS ANIMATION (SeaBank/Shopee Style) */
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px; /* Space out the center screen */
+            width: 100%;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .bouncing-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .bouncing-dots .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #1E3A8A; /* Navy Blue Premium */
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .bouncing-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+        .bouncing-dots .dot:nth-child(2) { animation-delay: -0.16s; }
+        .bouncing-dots .dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
         }
 
         /* Floating Bottom Bar (Consistent) */
@@ -370,28 +389,12 @@ export default function ReceiptPage() {
                     <div className="page-body">
                         <div className="receipt-shell">
                             {isLoading ? (
-                                <div className="receipt-card" style={{ padding: 0 }}>
-                                    <div className="receipt-header" style={{ paddingBottom: 32 }}>
-                                        <div className="skeleton-pulse" style={{ width: 72, height: 72, borderRadius: '50%', margin: '0 auto 16px' }}></div>
-                                        <div className="skeleton-pulse" style={{ width: '60%', height: 24, margin: '0 auto', borderRadius: 8 }}></div>
+                                <div className="loading-container">
+                                    <div className="bouncing-dots">
+                                        <div className="dot"></div>
+                                        <div className="dot"></div>
+                                        <div className="dot"></div>
                                     </div>
-                                    <div className="receipt-body">
-                                        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                                            <div className="skeleton-pulse" style={{ width: '40%', height: 16, margin: '0 auto 8px', borderRadius: 4 }}></div>
-                                            <div className="skeleton-pulse" style={{ width: '50%', height: 40, margin: '0 auto', borderRadius: 8 }}></div>
-                                        </div>
-                                        <div className="dashed-divider" />
-                                        <div className="skeleton-pulse" style={{ width: '40%', height: 20, marginBottom: 16, borderRadius: 4 }}></div>
-                                        {[1, 2, 3].map(i => (
-                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                                                <div className="skeleton-pulse" style={{ width: '50%', height: 16, borderRadius: 4 }}></div>
-                                                <div className="skeleton-pulse" style={{ width: '20%', height: 16, borderRadius: 4 }}></div>
-                                            </div>
-                                        ))}
-                                        <div className="dashed-divider" />
-                                        <div className="skeleton-pulse" style={{ width: '100%', height: 120, borderRadius: 8 }}></div>
-                                    </div>
-                                    <div className="tear-pattern" />
                                 </div>
                             ) : (
                                 <div className="receipt-card">
