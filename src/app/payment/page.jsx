@@ -72,6 +72,11 @@ export default function PaymentPage() {
         } catch (e) {
             if (process.env.NODE_ENV !== 'production') console.error("State parsing error", e);
         }
+
+        // TAHAP 54: Prefetching Route (Instant Navigation)
+        router.prefetch('/Qris');
+        router.prefetch('/order');
+
         return () => clearTimeout(timer);
     }, []);
 

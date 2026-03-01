@@ -249,6 +249,11 @@ export default function HomePixelPerfect() {
                     fetchDataCategories(currentStoreId),
                     fetchDataBanners(currentStoreId)
                 ]);
+
+                // TAHAP 54: Prefetching Route (Instant Navigation)
+                // Ini akan mendownload javascript /checkout di background saat jaringan nganggur
+                router.prefetch('/checkout');
+                router.prefetch('/status');
             } catch (err) {
                 console.error('Error loading initial data:', err);
             } finally {
@@ -290,8 +295,9 @@ export default function HomePixelPerfect() {
         const socket = io(socketUrl, {
             transports: ['websocket', 'polling'], // Fallback for PaaS
             reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000,
+            // TAHAP 54: Anti-DDoS Server Limit in Home Menu
+            reconnectionAttempts: 10,
+            reconnectionDelay: 5000,
             timeout: 20000
         });
 
@@ -754,6 +760,7 @@ export default function HomePixelPerfect() {
                                                 src={banner.isStatic ? banner.image : getImageUrl(banner.image)}
                                                 className={`w-[90px] h-[90px] rounded-[18px] flex-shrink-0 ${banner.isStatic ? 'object-contain p-[5px] bg-white/10' : 'object-cover bg-gray-600'}`}
                                                 alt={banner.title}
+                                                loading="lazy"
                                                 onError={(e) => e.target.style.display = 'none'} // Safety jika gambar error
                                             />
                                             <div className="flex flex-col justify-center gap-0">
@@ -860,6 +867,7 @@ export default function HomePixelPerfect() {
                                             src={getImageUrl(item.image)}
                                             className={`w-full h-full object-cover ${isHabis ? 'grayscale opacity-60' : ''}`}
                                             alt={item.name}
+                                            loading="lazy"
                                             onError={(e) => {
                                                 e.currentTarget.onerror = null;
                                                 e.currentTarget.src = '/assets/logo.png'; // Fallback ke logo atau placeholder lokal

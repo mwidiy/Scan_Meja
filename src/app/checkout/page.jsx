@@ -119,6 +119,10 @@ export default function CheckoutPage() {
             }
         };
         fetchRecommendations();
+
+        // TAHAP 54: Prefetching Route (Instant Navigation)
+        router.prefetch('/payment');
+        router.prefetch('/home');
     }, []);
 
     // --- SMART RECOMMENDATION ENGINE ---
@@ -512,6 +516,7 @@ export default function CheckoutPage() {
                                     src={getImageUrl(item.image || item.imgFile)}
                                     className="menu-thumb"
                                     alt={item.name}
+                                    loading="lazy"
                                     onError={(e) => { e.currentTarget.src = '/assets/logo.png'; }}
                                 />
                                 <div className="menu-details">
@@ -575,6 +580,7 @@ export default function CheckoutPage() {
                                         src={getImageUrl(m.image)}
                                         className="upsell-img"
                                         alt={m.name}
+                                        loading="lazy"
                                         onError={(e) => { e.currentTarget.src = '/assets/logo.png'; }}
                                     />
                                     <div className="upsell-name">{m.name}</div>

@@ -75,6 +75,10 @@ export default function StatusPage() {
     } finally {
       setLoading(false);
     }
+
+    // TAHAP 54: Prefetching Route (Instant Navigation)
+    router.prefetch('/waiting');
+    router.prefetch('/home');
   };
 
   const formatRupiah = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
@@ -552,7 +556,7 @@ export default function StatusPage() {
                     <div className="div-4">
                       <div className="div-5">
                         <span className="i-wrapper">
-                          <img src="/assets/Card_Icon.svg" alt="" />
+                          <img src="/assets/Card_Icon.svg" alt="" loading="lazy" />
                         </span>
                         <div className="div-7">
                           <h2 className="text-wrapper-4">Pesanan #{order.historicalIndex}</h2>
