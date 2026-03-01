@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import QRCode from 'react-qr-code';
+import { QRCodeCanvas } from 'qrcode.react';
 import { getDynamicUrl, createOrder } from '../../services/api';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -472,11 +472,10 @@ function QrisContent() {
                     ) : error ? (
                         <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
                     ) : qrValue ? (
-                        <QRCode
+                        <QRCodeCanvas
                             value={qrValue}
                             size={200}
                             style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                            viewBox={`0 0 256 256`}
                         />
                     ) : null}
                 </div>
