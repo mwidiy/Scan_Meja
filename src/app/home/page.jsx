@@ -959,23 +959,15 @@ export default function HomePixelPerfect() {
 
                     {/* 1. Tombol Bantuan (CS) - Tahap 58: Pindah rute */}
                     <div
-                        className="w-[52px] h-[52px] rounded-full bg-white text-[#111827] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100"
+                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
                         onClick={() => router.push('/bantuan')}
                     >
-                        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <img src="/assets/cs.svg" alt="CS" className="w-[26px] h-[26px] object-contain" />
                     </div>
 
-                    {/* 2. Tombol Notification / Status */}
+                    {/* 2. Tombol Keranjang */}
                     <div
-                        className="w-[52px] h-[52px] rounded-full bg-white text-[#111827] flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-gray-100"
-                        onClick={() => router.push('/status')}
-                    >
-                        <svg className="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </div>
-
-                    {/* 3. Tombol Keranjang */}
-                    <div
-                        className="w-[56px] h-[56px] rounded-full bg-[#111827] text-white flex justify-center items-center shadow-[0_10px_25px_rgba(17,24,39,0.3)] cursor-pointer hover:-translate-y-1 transition-transform relative"
+                        className="w-[56px] h-[56px] rounded-full bg-[#FACC15] text-[#1F2937] flex justify-center items-center shadow-[0_10px_25px_rgba(250,204,21,0.3)] cursor-pointer hover:-translate-y-1 transition-transform relative border border-transparent"
                         onClick={() => {
                             const items = Object.entries(cart).map(([key, qty]) => {
                                 const idNum = Number(key);
@@ -997,10 +989,18 @@ export default function HomePixelPerfect() {
                             router.push('/checkout');
                         }}
                     >
-                        <div className={`absolute -top-[6px] -right-[6px] bg-[#FACC15] text-[#111827] text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+                        <div className={`absolute -top-[6px] -right-[6px] bg-[#EF4444] text-white text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${totalItemsInCart > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
                             {totalItemsInCart}
                         </div>
-                        <svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+
+                    {/* 3. Tombol Notification / Status */}
+                    <div
+                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
+                        onClick={() => router.push('/status')}
+                    >
+                        <svg className="w-[26px] h-[26px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     </div>
                 </div>
             </div>
