@@ -13,35 +13,17 @@ function WelcomeContent() {
 
     // --- Logic Check Table ID from URL (Silent) ---
     useEffect(() => {
-        const tableId = searchParams.get('tableId');
+        let tableId = searchParams.get('tableId');
+        let isDemoMode = false;
 
         // TAHAP 66: DEMO MODE BYPASS (DUITKU KYC)
         // Jika tidak ada tableId sama sekali (pengunjung murni buka url utama)
         if (!tableId) {
-            // Kita suntik data "Meja Tiruan" agar mereka bisa masuk ke PWA
-            const dummyTable = {
-                id: 9999, // Fake ID
-                name: "Reviewer Duitku",
-                qrCode: "DEMO-DUITKU-123",
-                isActive: true,
-                locationId: 1, // Asumsi ini main location
-                location: {
-                    id: 1,
-                    name: "Area Demo",
-                    storeId: 1 // VITAL: Arahkan ke Toko Utama agar katalog produk muncul
-                }
-            };
-
-            // Set identitas palsu
-            localStorage.setItem('customer_table', JSON.stringify(dummyTable));
-            localStorage.setItem('customerName', 'Tamu Kehormatan');
-
+            tableId = 'TBL-12-FGAK'; // Gunakan ID Meja Asli
+            isDemoMode = true;
             if (process.env.NODE_ENV !== 'production') {
-                console.log("Duitku Demo Mode Activated - Bypassing to Home");
+                console.log("Duitku Demo Mode Activated - Fetching Real Table TBL-12-FGAK");
             }
-            // Langsung lempar ke Home tanpa minta nama
-            router.push('/home');
-            return;
         }
 
         // Security: Sanitize Table ID (Alphanumeric + dash only)
@@ -58,7 +40,14 @@ function WelcomeContent() {
                         }
 
                         localStorage.setItem('customer_table', JSON.stringify(data));
-                        // Optional: Clean URL without reload
+
+                        if (isDemoMode) {
+                            localStorage.setItem('customerName', 'Tamu');
+                            router.push('/home'); // Langsung lempar ke Home tanpa minta nama
+                            return;
+                        }
+
+                        // Optional: Clean URL without reload for normal users
                         const newUrl = new URL(window.location.href);
                         newUrl.searchParams.delete('tableId');
                         window.history.replaceState({}, '', newUrl);
