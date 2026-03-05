@@ -949,14 +949,13 @@ export default function HomePixelPerfect() {
                     <div className="w-full bg-[#1F2937] mt-[-120px] pt-[30px] pb-[140px] px-[22px] flex flex-col items-center justify-center text-center rounded-t-[32px] relative z-10 shadow-[0_-10px_20px_rgba(15,23,42,0.1)]">
                         <div className="w-[40px] h-[4px] bg-white/20 rounded-full mb-[24px]"></div>
                         <img
-                            src={store?.logo ? getImageUrl(store.logo) : "/assets/logo.png"}
+                            src="/assets/logo1.png"
                             alt="Logo"
-                            className="h-[46px] w-auto object-contain mb-[16px] opacity-90 grayscale brightness-200"
-                            onError={(e) => { e.target.style.display = 'none'; }}
+                            className="h-[56px] w-auto object-contain mb-[16px] opacity-95 brightness-150"
                         />
-                        <h4 className="text-white text-[1.1rem] font-bold mb-[4px]">{store?.name || 'QuackXel App'}</h4>
-                        <p className="text-white/60 text-[0.85rem] mb-[20px] max-w-[280px] leading-[1.5]">
-                            Penyedia layanan Self-Order terintegrasi Duitku melayani segala pesanan Anda dengan praktis.
+                        <h4 className="text-white text-[1.1rem] font-bold mb-[4px]">Quecxel</h4>
+                        <p className="text-white/80 text-[0.85rem] mb-[20px] max-w-[280px] leading-[1.5]">
+                            Penyedia layanan Self-Order terintegrasi melayani segala pesanan Anda dengan praktis.
                         </p>
 
                         <div className="flex flex-col gap-[12px] w-full max-w-[300px] bg-white/5 rounded-[20px] p-[18px]">
@@ -964,20 +963,20 @@ export default function HomePixelPerfect() {
                                 <div className="w-[32px] h-[32px] rounded-full bg-[#FACC15]/20 flex items-center justify-center text-[#FACC15]">
                                     <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 </div>
-                                <span className="text-white/80 text-[0.85rem] font-medium text-left">support@quacxel.my.id</span>
+                                <span className="text-white text-[0.85rem] font-medium text-left">boba99924999@gmail.com</span>
                             </div>
                             <div className="flex items-center gap-[12px]">
                                 <div className="w-[32px] h-[32px] rounded-full bg-[#FACC15]/20 flex items-center justify-center text-[#FACC15]">
                                     <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                                 </div>
-                                <span className="text-white/80 text-[0.85rem] font-medium text-left">{whatsappNumber || '0821-3444-5555'} (CS)</span>
+                                <span className="text-white text-[0.85rem] font-medium text-left">0895808953200 (CS)</span>
                             </div>
                             <div className="flex items-start gap-[12px]">
                                 <div className="w-[32px] h-[32px] rounded-full bg-[#FACC15]/20 flex items-center justify-center text-[#FACC15] shrink-0 mt-[2px]">
                                     <svg className="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
-                                <span className="text-white/80 text-[0.8rem] font-medium text-left leading-[1.4]">
-                                    Jl. Mawar No. 12, Sleman, Yogyakarta (HQ)
+                                <span className="text-white text-[0.85rem] font-medium text-left leading-[1.4]">
+                                    Jl. Halmahera No.KM. 01 52121 Jawa Jawa Tengah
                                 </span>
                             </div>
                         </div>
