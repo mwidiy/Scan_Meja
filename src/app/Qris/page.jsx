@@ -359,11 +359,13 @@ function QrisContent() {
                         }
                     }
                 } else {
-                    throw new Error(json.message || "Gagal memuat QR");
+                    throw new Error(json.message || "Gagal memuat pembayaran");
                 }
             } catch (err) {
                 if (process.env.NODE_ENV !== 'production') console.error("QR Fetch Error:", err);
-                setError("Gagal memuat QR Code. Silakan coba lagi.");
+
+                // Tampilkan pesan error spesifik dari Backend kalau ada (contoh: "Metode Pembayaran belum diaktifkan")
+                setError(err.message || "Terjadi kesalahan sistem. Silakan coba lagi.");
             } finally {
                 setLoadingQr(false);
             }
