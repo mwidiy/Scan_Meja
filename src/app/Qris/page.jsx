@@ -347,10 +347,11 @@ function QrisContent() {
                     } else if (json.data.paymentUrl) {
                         // Security: Open Redirect Protection
                         const url = json.data.paymentUrl;
-                        // Whitelist domains (Pakasir, Midtrans, etc.)
-                        const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
+                        // Whitelist domains (Duitku SDK & Sandbox)
+                        const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
 
                         if (url && IS_SAFE_DOMAIN) {
+                            if (process.env.NODE_ENV !== 'production') console.log("Redirecting to Duitku:", url);
                             window.location.href = url;
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
