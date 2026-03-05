@@ -105,15 +105,32 @@ export default function CheckoutPage() {
 
             try {
                 const rawData = await getProducts(storeId);
+                let productsList = [];
                 if (Array.isArray(rawData)) {
-                    setAllProducts(rawData);
+                    productsList = rawData;
                 } else if (rawData && Array.isArray(rawData.data)) {
-                    setAllProducts(rawData.data);
+                    productsList = rawData.data;
                 } else if (rawData && Array.isArray(rawData.products)) {
-                    setAllProducts(rawData.products);
-                } else {
-                    setAllProducts([]);
+                    productsList = rawData.products;
                 }
+
+                // TAHAP 71: MOCK IMAGE INJECTION (DUITKU KYC)
+                const mockImages = [
+                    '/assets/permen.jpg',
+                    '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg',
+                    '/assets/bakso.jpeg',
+                    '/assets/soto.jpg',
+                    '/assets/soto-ayam.jpg'
+                ];
+
+                productsList = productsList.map((item, index) => {
+                    if (index < mockImages.length) {
+                        return { ...item, image: mockImages[index] };
+                    }
+                    return item;
+                });
+
+                setAllProducts(productsList);
             } catch (err) {
                 setAllProducts([]);
             }
@@ -513,7 +530,7 @@ export default function CheckoutPage() {
                         checkoutState.items.map((item, idx) => (
                             <div className="menu-item" key={idx}>
                                 <img
-                                    src={getImageUrl(item.image || item.imgFile)}
+                                    src={(item.image || item.imgFile)?.startsWith('/assets/') ? (item.image || item.imgFile) : getImageUrl(item.image || item.imgFile)}
                                     className="menu-thumb"
                                     alt={item.name}
                                     loading="lazy"
@@ -577,7 +594,7 @@ export default function CheckoutPage() {
                             {recommendations.map(m => (
                                 <div className="upsell-card" key={m.id}>
                                     <img
-                                        src={getImageUrl(m.image)}
+                                        src={m.image?.startsWith('/assets/') ? m.image : getImageUrl(m.image)}
                                         className="upsell-img"
                                         alt={m.name}
                                         loading="lazy"
