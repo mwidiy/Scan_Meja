@@ -352,7 +352,7 @@ function QrisContent() {
 
                         if (url && IS_SAFE_DOMAIN) {
                             if (process.env.NODE_ENV !== 'production') console.log("Redirecting to Duitku:", url);
-                            window.location.replace(url);
+                            window.location.href = url;
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
                             if (process.env.NODE_ENV !== 'production') console.error("Blocked unsafe redirect:", url);
