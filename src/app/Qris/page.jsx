@@ -19,7 +19,8 @@ function QrisContent() {
 
     // QR State
     const [qrValue, setQrValue] = useState('');
-    const [loadingQr, setLoadingQr] = useState(true);
+    const [paymentUrl, setPaymentUrl] = useState(""); // Track Duitku URL
+    const [loadingQr, setLoadingQr] = useState(false);
     const [error, setError] = useState(null);
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
@@ -351,8 +352,8 @@ function QrisContent() {
                         const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
 
                         if (url && IS_SAFE_DOMAIN) {
-                            if (process.env.NODE_ENV !== 'production') console.log("Redirecting to Duitku:", url);
-                            window.location.href = url;
+                            if (process.env.NODE_ENV !== 'production') console.log("Menunggu aksi pengguna untuk Duitku URL:", url);
+                            setPaymentUrl(url); // Simpan URL, jangan auto redirect
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
                             if (process.env.NODE_ENV !== 'production') console.error("Blocked unsafe redirect:", url);
@@ -403,6 +404,27 @@ function QrisContent() {
         const m = String(Math.floor(sec / 60)).padStart(2, '0');
         const s = String(sec % 60).padStart(2, '0');
         return `${m}:${s}`;
+    };
+
+    const handleBypassPayment = async () => {
+        if (!orderId) return;
+        try {
+            const API_URL = getDynamicUrl();
+            const res = await fetch(`${API_URL}/api/payment/simulate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // UI will react to socket automatically, but we can also trigger optimistic state
+                if (process.env.NODE_ENV !== 'production') console.log("Bypass Success!");
+            } else {
+                alert("Bypass gagal: " + (data.message || "Unknown error"));
+            }
+        } catch (e) {
+            alert("Bypass error: " + e.message);
+        }
     };
 
     return (
@@ -480,6 +502,31 @@ function QrisContent() {
                             size={200}
                             style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                         />
+                    ) : paymentUrl ? (
+                        <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                            <div style={{ width: '60px', height: '60px', background: '#F0F9FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                            </div>
+                            <button
+                                onClick={() => window.open(paymentUrl, '_blank')}
+                                style={{
+                                    background: '#2563EB', color: '#FFF', border: 'none', padding: '12px 20px',
+                                    borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                                }}
+                            >
+                                Buka Halaman Duitku
+                            </button>
+                            <button
+                                onClick={handleBypassPayment}
+                                style={{
+                                    background: 'transparent', color: '#10B981', border: '2px solid #10B981', padding: '10px 16px',
+                                    borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer', fontSize: '0.85rem'
+                                }}
+                            >
+                                Simulasi Bayar Lunas (Bypass)
+                            </button>
+                        </div>
                     ) : null}
                 </div>
 
