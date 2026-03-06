@@ -164,23 +164,6 @@ export default function HomePixelPerfect() {
                 ? prodsRes.data
                 : (Array.isArray(prodsRes) ? prodsRes : []);
 
-            // TAHAP 67: MOCK IMAGE INJECTION (DUITKU KYC)
-            const mockImages = [
-                '/assets/permen.jpg',
-                '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg',
-                '/assets/bakso.jpeg',
-                '/assets/soto.jpg',
-                '/assets/soto-ayam.jpg'
-            ];
-
-            // Map the fetched products and inject local images for the first 5 items
-            productsData = productsData.map((item, index) => {
-                if (index < mockImages.length) {
-                    return { ...item, image: mockImages[index] };
-                }
-                return item;
-            });
-
             setProducts(productsData);
         } catch (error) {
             console.error('Error fetching products:', error);

@@ -18,7 +18,6 @@ export default function TrackingPage() {
     const [customerName, setCustomerName] = useState('-');
     const [estimatedTime, setEstimatedTime] = useState('-');
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
-    const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
 
 
     // --- WHATSAPP LOGIC (Moved up) ---
@@ -138,34 +137,6 @@ export default function TrackingPage() {
                     const wa = String(order.store.whatsappNumber).replace(/\D/g, '');
                     if (wa.length >= 8 && wa.length <= 15) setWhatsappNumber(wa);
                 }
-
-                // TAHAP 71: BUAT KAMUS GAMBAR
-                getProducts(order.storeId).then(rawData => {
-                    let productsList = [];
-                    if (Array.isArray(rawData)) {
-                        productsList = rawData;
-                    } else if (rawData && Array.isArray(rawData.data)) {
-                        productsList = rawData.data;
-                    } else if (rawData && Array.isArray(rawData.products)) {
-                        productsList = rawData.products;
-                    }
-
-                    const mockImages = [
-                        '/assets/permen.jpg',
-                        '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg',
-                        '/assets/bakso.jpeg',
-                        '/assets/soto.jpg',
-                        '/assets/soto-ayam.jpg'
-                    ];
-
-                    const dict = {};
-                    productsList.forEach((p, idx) => {
-                        if (idx < mockImages.length) {
-                            dict[p.id] = mockImages[idx];
-                        }
-                    });
-                    setMockDictionary(dict);
-                }).catch(e => console.error("Error fetching dictionary:", e));
 
             }
         }).catch(err => { if (process.env.NODE_ENV !== 'production') console.error("Error refreshing data:", err); })
@@ -988,43 +959,18 @@ export default function TrackingPage() {
                         <div className="card">
                             <h3 className="section-title">Rincian Order</h3>
                             <div>
-                                {orderItems.map((item, idx) => {
-                                    // TAHAP 71: MAPPING KAMUS GAMBAR
-                                    // Karena di orderItems kita nggak nyimpen product id yang aslinya pas state rehydrate, 
-                                    // tapi pas normal fetch (mappedItems) kita belum tau productId-nya kalo ngga dikeluarin.
-                                    // Fix: Kita tetep coba load berdasarkan original name fallback atau dictionary kalo item punya productId.
-                                    // Untuk sekarang, kita pake original getImageUrl kalo nggak ada di dict.
-                                    // Untuk bikin lebih bulletproof, kita match nama aja.
-                                    const matchedImage = Object.values(mockDictionary).find((_, idx2) => Object.keys(mockDictionary)[idx2] === item.productId?.toString()) ||
-                                        (item.image?.startsWith('/assets/') ? item.image : getImageUrl(item.image || '/assets/placeholder.png'));
-
-                                    // Let's implement name-based matching as a robust fallback since we don't always have ID in cart state.
-                                    // (Although refreshing from backend does give us exact products, the dictionary is fetched simultaneously)
-                                    // A simpler trick matching the mock array directly:
-                                    let finalImg = item.image;
-                                    if (item.name?.toLowerCase().includes('permen')) finalImg = '/assets/permen.jpg';
-                                    else if (item.name?.toLowerCase().includes('jus') || item.name?.toLowerCase().includes('alpukat')) finalImg = '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg';
-                                    else if (item.name?.toLowerCase().includes('bakso')) finalImg = '/assets/bakso.jpeg';
-                                    else if (item.name?.toLowerCase().includes('soto ayam')) finalImg = '/assets/soto-ayam.jpg';
-                                    else if (item.name?.toLowerCase().includes('soto')) finalImg = '/assets/soto.jpg';
-
-                                    if (finalImg && !finalImg.startsWith('/assets/')) {
-                                        finalImg = getImageUrl(finalImg);
-                                    }
-
-                                    return (
-                                        <div className="item-row" key={idx}>
-                                            <img src={finalImg || '/assets/placeholder.png'} className="item-img" alt={item.name} />
-                                            <div className="item-info">
-                                                <div className="item-name">{item.name}</div>
-                                                <div className="item-meta">
-                                                    <span>{item.qty}x</span>
-                                                    <span style={{ fontWeight: 600, color: '#111827' }}>{formatRupiah(item.price)}</span>
-                                                </div>
+                                {orderItems.map((item, idx) => (
+                                    <div className="item-row" key={idx}>
+                                        <img src={getImageUrl(item.image || '/assets/placeholder.png')} className="item-img" alt={item.name} />
+                                        <div className="item-info">
+                                            <div className="item-name">{item.name}</div>
+                                            <div className="item-meta">
+                                                <span>{item.qty}x</span>
+                                                <span style={{ fontWeight: 600, color: '#111827' }}>{formatRupiah(item.price)}</span>
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                ))}
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, paddingTop: 24, borderTop: '1px dashed #E5E7EB' }}>
