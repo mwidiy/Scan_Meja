@@ -114,6 +114,22 @@ export default function CheckoutPage() {
                     productsList = rawData.products;
                 }
 
+                // TAHAP 71: MOCK IMAGE INJECTION (DUITKU KYC)
+                const mockImages = [
+                    '/assets/permen.jpg',
+                    '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg',
+                    '/assets/bakso.jpeg',
+                    '/assets/soto.jpg',
+                    '/assets/soto-ayam.jpg'
+                ];
+
+                productsList = productsList.map((item, index) => {
+                    if (index < mockImages.length) {
+                        return { ...item, image: mockImages[index] };
+                    }
+                    return item;
+                });
+
                 setAllProducts(productsList);
             } catch (err) {
                 setAllProducts([]);

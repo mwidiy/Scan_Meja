@@ -101,7 +101,7 @@ export default function ProductDetailModal({ product, onClose, onChangeSelectedQ
                             )}
                             <img
                                 className="product-img"
-                                src={getImageUrl(product.image)}
+                                src={product.image && product.image.startsWith('/assets/') ? product.image : getImageUrl(product.image)}
                                 alt={product.name}
                                 onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://placehold.co/600x600/E5E7EB/6B7280?text=${encodeURIComponent(product.name)}`; }}
                             />
