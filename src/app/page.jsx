@@ -42,9 +42,10 @@ function WelcomeContent() {
                         localStorage.setItem('customer_table', JSON.stringify(data));
 
                         if (isDemoMode) {
-                            localStorage.setItem('customerName', 'Tamu');
-                            router.push('/home'); // Langsung lempar ke Home tanpa minta nama
-                            return;
+                            // TAHAP 72: Hapus bypass nama "Tamu", wajibkan user input nama sendiri
+                            // localStorage.setItem('customerName', 'Tamu');
+                            // router.push('/home'); // Langsung lempar ke Home tanpa minta nama
+                            // return;
                         }
 
                         // Optional: Clean URL without reload for normal users
