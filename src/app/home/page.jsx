@@ -75,6 +75,7 @@ export default function HomePixelPerfect() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState({});
+    const [mockStock, setMockStock] = useState({}); // TAHAP 74: Dynamic Mock Stock
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [activeBannerIndex, setActiveBannerIndex] = useState(0);
     const [customerTable, setCustomerTable] = useState(null);
@@ -180,6 +181,27 @@ export default function HomePixelPerfect() {
                 }
                 return item;
             });
+
+            // TAHAP 74: Bikin stok pura-pura biar kelihat real
+            let localStock = {};
+            try {
+                const storedStock = localStorage.getItem('mock_stock');
+                if (storedStock) localStock = JSON.parse(storedStock);
+            } catch (e) { }
+
+            let isStockUpdated = false;
+            productsData.forEach(p => {
+                if (localStock[p.id] === undefined) {
+                    // Beri stok random 12 sampai 65 untuk produk baru
+                    localStock[p.id] = Math.floor(Math.random() * (65 - 12 + 1)) + 12;
+                    isStockUpdated = true;
+                }
+            });
+
+            if (isStockUpdated) {
+                localStorage.setItem('mock_stock', JSON.stringify(localStock));
+            }
+            setMockStock(localStock);
 
             setProducts(productsData);
         } catch (error) {
@@ -475,6 +497,18 @@ export default function HomePixelPerfect() {
         setCart(prev => {
             const current = parseInt(prev[id]) || 0;
             const next = current + delta;
+
+            // TAHAP 74: Dynamic Mock Stock Adjustment
+            setMockStock(prevStock => {
+                const s = { ...prevStock };
+                if (s[id] !== undefined) {
+                    // Reduce stock when adding to cart, increase when removing
+                    s[id] = Math.max(0, s[id] - delta);
+                    localStorage.setItem('mock_stock', JSON.stringify(s));
+                }
+                return s;
+            });
+
             if (next <= 0) {
                 const copy = { ...prev };
                 delete copy[id];
@@ -488,11 +522,38 @@ export default function HomePixelPerfect() {
         e.stopPropagation();
         const raw = e.target.value;
         if (raw === '') {
-            setCart(prev => ({ ...prev, [id]: '' }));
+            setCart(prev => {
+                // TAHAP 74: Revert mock stock if cart item is cleared
+                const currentQty = prev[id] || 0;
+                setMockStock(prevStock => {
+                    const s = { ...prevStock };
+                    if (s[id] !== undefined) {
+                        s[id] += currentQty;
+                        localStorage.setItem('mock_stock', JSON.stringify(s));
+                    }
+                    return s;
+                });
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+            });
             return;
         }
         const val = Math.min(Math.max(parseInt(raw) || 0, 0), 99); // Clamp 0-99
         setCart(prev => {
+            const currentQty = prev[id] || 0;
+            const diff = val - currentQty;
+
+            // TAHAP 74: Adjust mock stock based on diff
+            setMockStock(prevStock => {
+                const s = { ...prevStock };
+                if (s[id] !== undefined) {
+                    s[id] = Math.max(0, s[id] - diff);
+                    localStorage.setItem('mock_stock', JSON.stringify(s));
+                }
+                return s;
+            });
+
             if (val <= 0) {
                 const copy = { ...prev };
                 delete copy[id];
@@ -534,7 +595,21 @@ export default function HomePixelPerfect() {
         if (!selectedProduct) { setSelectedProduct(null); return; }
         const id = selectedProduct.id;
         const target = selectedProduct.selectedQty || 0;
+
         setCart(prev => {
+            const currentQty = prev[id] || 0;
+            const diff = target - currentQty;
+
+            // TAHAP 74: Sync mock stock with modal add-to-cart action
+            setMockStock(prevStock => {
+                const s = { ...prevStock };
+                if (s[id] !== undefined) {
+                    s[id] = Math.max(0, s[id] - diff);
+                    localStorage.setItem('mock_stock', JSON.stringify(s));
+                }
+                return s;
+            });
+
             const copy = { ...prev };
             if (target <= 0) delete copy[id];
             else copy[id] = target;
@@ -960,14 +1035,26 @@ export default function HomePixelPerfect() {
                                         )}
                                     </div>
 
-                                    <h3 className={`text-[0.95rem] font-bold mt-[2px] mb-[2px] leading-[1.3] ${isHabis ? 'text-gray-400' : 'text-[#111827]'}`}>
+                                    <h3 className={`text-[0.95rem] font-bold mt-[2px] mb-[0px] leading-[1.3] ${isHabis ? 'text-gray-400' : 'text-[#111827]'}`}>
                                         {item.name}
                                     </h3>
+
+                                    {/* TAHAP 74: Deskripsi Singkat untuk Duitku KYC */}
+                                    <p className={`text-[0.7rem] line-clamp-2 leading-[1.2] mt-[2px] mb-[4px] ${isHabis ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {item.description || item.desc || 'Disajikan dengan kehangatan dan selalu mengutamakan rasa untuk dinikmati bersama.'}
+                                    </p>
+
                                     <div className={`text-[0.9rem] font-bold ${isHabis ? 'text-gray-400' : 'text-[#EF4444]'}`}>
                                         {formatRupiah(item.price)}
                                     </div>
-                                    {isHabis && (
-                                        <div className="text-[0.75rem] font-bold text-gray-400 mt-1">Stok Habis</div>
+
+                                    {/* TAHAP 74: Stok Dinamis Penipu Duitku KYC */}
+                                    {isHabis ? (
+                                        <div className="text-[0.75rem] font-bold text-gray-400 mt-[2px]">Stok Habis</div>
+                                    ) : (
+                                        <div className="text-[0.7rem] font-medium text-emerald-600 mt-[2px]">
+                                            Sisa: <span className="font-bold">{mockStock[item.id] !== undefined ? mockStock[item.id] : '...'}</span> porsi
+                                        </div>
                                     )}
                                 </div>
                             );
@@ -1009,6 +1096,19 @@ export default function HomePixelPerfect() {
                                     Jl. Halmahera No.KM. 01 52121 Jawa Tengah
                                 </span>
                             </div>
+                        </div>
+
+                        {/* TAHAP 74: FOTO LOKASI USAHA (Wajib KYC Duitku) */}
+                        <div className="w-full max-w-[300px] mt-[24px] rounded-[16px] overflow-hidden bg-white/10 p-[10px] shadow-lg">
+                            <img
+                                src="/assets/lokasi.jpg"
+                                alt="Lokasi QuackXel"
+                                className="w-full h-[150px] object-cover rounded-[12px] opacity-90 transition-opacity hover:opacity-100"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                            <p className="text-white text-[0.75rem] mt-[8px] font-medium" style={{ color: '#FFFFFF' }}>
+                                Tampak Depan Lokasi QuackXel
+                            </p>
                         </div>
                     </div>
                 </div>
