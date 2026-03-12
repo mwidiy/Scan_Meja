@@ -348,11 +348,11 @@ function QrisContent() {
                     } else if (json.data.paymentUrl) {
                         // Security: Open Redirect Protection
                         const url = json.data.paymentUrl;
-                        // Whitelist domains (Duitku SDK & Sandbox)
+                        // Whitelist domains (Midtrans, Duitku, Xendit, dll)
                         const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
 
                         if (url && IS_SAFE_DOMAIN) {
-                            if (process.env.NODE_ENV !== 'production') console.log("Menunggu aksi pengguna untuk Duitku URL:", url);
+                            if (process.env.NODE_ENV !== 'production') console.log("Menunggu aksi pengguna untuk Midtrans URL:", url);
                             setPaymentUrl(url); // Simpan URL, jangan auto redirect
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
@@ -508,14 +508,14 @@ function QrisContent() {
                                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                             </div>
                             <button
-                                onClick={() => window.open(paymentUrl, '_blank')}
+                                onClick={() => window.open(paymentUrl, '_self')}
                                 style={{
                                     background: '#2563EB', color: '#FFF', border: 'none', padding: '12px 20px',
                                     borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer',
                                     boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
                                 }}
                             >
-                                Buka Halaman Duitku
+                                Buka Halaman Midtrans
                             </button>
                             <button
                                 onClick={handleBypassPayment}
