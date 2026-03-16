@@ -16,6 +16,7 @@ export default function CheckoutPage() {
     const [notes, setNotes] = useState('');
     const [notesDraft, setNotesDraft] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAgreed, setIsAgreed] = useState(false); // TAHAP 76: Midtrans Compliance
 
     // --- SMART UPSELL STATE ---
     const [allProducts, setAllProducts] = useState([]);
@@ -273,6 +274,10 @@ export default function CheckoutPage() {
         vibrate(20);
         if (!checkoutState.items || checkoutState.items.length === 0) {
             alert('Belum ada pesanan.');
+            return;
+        }
+        if (!isAgreed) {
+            alert('Mohon centang persetujuan Syarat & Ketentuan sebelum melanjutkan pembayaran.');
             return;
         }
         if (orderType === 'delivery' && (!location || !location.trim())) {
@@ -611,6 +616,18 @@ export default function CheckoutPage() {
                     </div>
                 )}
 
+                {/* 5.5 TAHAP 76: Legal Checkbox & Support */}
+                <div style={{ padding: '0 8px', marginBottom: '24px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.8rem', color: 'var(--text-sec)', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={isAgreed} onChange={(e) => setIsAgreed(e.target.checked)} style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: 'var(--primary-dark)' }} />
+                        <span>Saya telah membaca dan menyetujui <a onClick={(e) => { e.preventDefault(); router.push('/bantuan'); }} style={{ color: '#2563EB', fontWeight: '600', textDecoration: 'underline' }}>Syarat & Ketentuan</a> serta Kebijakan Privasi restoran ini. Refund berlaku untuk pesanan batal.</span>
+                    </label>
+                    <div style={{ marginTop: '12px', padding: '10px', background: '#EFF6FF', borderRadius: '12px', fontSize: '0.75rem', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.2rem' }}>📞</span> 
+                        <span>Butuh Bantuan? WhatsApp Kasir: <a href="https://wa.me/62895808953200" style={{ fontWeight: '700', textDecoration: 'none', color: '#1E3A8A' }}>0895808953200</a></span>
+                    </div>
+                </div>
+
                 {/* 6. Modals */}
                 {locationModalOpen && (
                     <div className="modal-overlay" onClick={() => setLocationModalOpen(false)}>
@@ -662,7 +679,7 @@ export default function CheckoutPage() {
                         <span className="bar-label">Total Tagihan</span>
                         <span className="bar-total">{formatRupiah(checkoutState.subtotal)}</span>
                     </div>
-                    <button className="bar-btn" onClick={handleOrderNow} disabled={isSubmitting}>
+                    <button className="bar-btn" onClick={handleOrderNow} disabled={isSubmitting || !isAgreed} style={{ opacity: isAgreed ? 1 : 0.5 }}>
                         <span>Pesan Sekarang</span>
                     </button>
                 </div>
