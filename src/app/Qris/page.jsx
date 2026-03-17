@@ -26,10 +26,6 @@ function QrisContent() {
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
     const [serverExpiry] = useState(() => Date.now() + 300000); // 5 min from load (Hard Timer)
-    
-    // TAHAP 76: Auto-Redirect State
-    const [redirectTimer, setRedirectTimer] = useState(2); 
-    const bypassRef = useRef(false);
 
     // --- REFS FOR CALLBACKS (Prevents useEffect loops) ---
     const handleSuccessRef = useRef();
@@ -316,28 +312,6 @@ function QrisContent() {
         }
     }, [remaining, isPaid, isExpired, orderId, orderState, router, serverExpiry, loadingQr]);
 
-    // TAHAP 76: Auto-Redirect Midtrans KYC
-    useEffect(() => {
-        if (paymentUrl && !bypassRef.current) {
-            const hasRedirected = sessionStorage.getItem(`redirected_${orderId}`);
-            if (hasRedirected) {
-                setRedirectTimer(-1); // Stop loop if already redirected once
-                return;
-            }
-
-            if (redirectTimer > 0) {
-                const timer = setTimeout(() => setRedirectTimer(r => r - 1), 1000);
-                return () => clearTimeout(timer);
-            } else {
-                if (!bypassRef.current && !isPaid) {
-                    if (process.env.NODE_ENV !== 'production') console.log("Auto-redirecting to Midtrans...");
-                    sessionStorage.setItem(`redirected_${orderId}`, "true");
-                    window.location.href = paymentUrl;
-                }
-            }
-        }
-    }, [paymentUrl, redirectTimer, isPaid, orderId]);
-
     // 2. Fetch QR Code Trigger
     useEffect(() => {
         if (!orderId || !amount) return;
@@ -433,8 +407,6 @@ function QrisContent() {
     };
 
     const handleBypassPayment = async () => {
-        bypassRef.current = true; // Block UI auto-redirect
-        setRedirectTimer(-1); // Hide countdown
         if (!orderId) return;
         try {
             const API_URL = getDynamicUrl();
@@ -535,22 +507,8 @@ function QrisContent() {
                             <div style={{ width: '60px', height: '60px', background: '#F0F9FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                             </div>
-                            
-                            {redirectTimer > 0 ? (
-                                <div style={{fontSize: '0.9rem', color: '#64748B', textAlign: 'center'}}>
-                                    Mengarahkan otomatis ke Midtrans dalam <b>{redirectTimer}</b>...
-                                </div>
-                            ) : redirectTimer === 0 ? (
-                                <div style={{fontSize: '0.9rem', color: '#64748B', textAlign: 'center'}}>
-                                    Membuka gerbang pembayaran...
-                                </div>
-                            ) : null}
-
                             <button
-                                onClick={() => {
-                                    sessionStorage.setItem(`redirected_${orderId}`, "true");
-                                    window.location.href = paymentUrl;
-                                }}
+                                onClick={() => window.open(paymentUrl, '_self')}
                                 style={{
                                     background: '#2563EB', color: '#FFF', border: 'none', padding: '12px 20px',
                                     borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer',
