@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { QRCodeCanvas } from 'qrcode.react';
 import { getDynamicUrl, createOrder } from '../../services/api';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -406,27 +405,6 @@ function QrisContent() {
         return `${m}:${s}`;
     };
 
-    const handleBypassPayment = async () => {
-        if (!orderId) return;
-        try {
-            const API_URL = getDynamicUrl();
-            const res = await fetch(`${API_URL}/api/payment/simulate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId })
-            });
-            const data = await res.json();
-            if (data.success) {
-                // UI will react to socket automatically, but we can also trigger optimistic state
-                if (process.env.NODE_ENV !== 'production') console.log("Bypass Success!");
-            } else {
-                alert("Bypass gagal: " + (data.message || "Unknown error"));
-            }
-        } catch (e) {
-            alert("Bypass error: " + e.message);
-        }
-    };
-
     return (
         <div className="app">
             <style jsx global>{`
@@ -497,35 +475,12 @@ function QrisContent() {
                     ) : error ? (
                         <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
                     ) : qrValue ? (
-                        <QRCodeCanvas
-                            value={qrValue}
-                            size={200}
-                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                        />
-                    ) : paymentUrl ? (
-                        <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-                            <div style={{ width: '60px', height: '60px', background: '#F0F9FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                            </div>
-                            <button
-                                onClick={() => window.open(paymentUrl, '_self')}
-                                style={{
-                                    background: '#2563EB', color: '#FFF', border: 'none', padding: '12px 20px',
-                                    borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
-                                }}
-                            >
-                                Buka Halaman Midtrans
-                            </button>
-                            <button
-                                onClick={handleBypassPayment}
-                                style={{
-                                    background: 'transparent', color: '#10B981', border: '2px solid #10B981', padding: '10px 16px',
-                                    borderRadius: '12px', fontWeight: '600', width: '100%', cursor: 'pointer', fontSize: '0.85rem'
-                                }}
-                            >
-                                Simulasi Bayar Lunas (Bypass)
-                            </button>
+                        <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
+                            <img 
+                                src={qrValue} 
+                                alt="QRIS Code" 
+                                style={{ height: "auto", maxWidth: "100%", width: "220px", display: 'block' }}
+                            />
                         </div>
                     ) : null}
                 </div>
