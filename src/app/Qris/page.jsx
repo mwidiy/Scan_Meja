@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getDynamicUrl, createOrder } from '../../services/api';
 import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
+import QRCode from 'qrcode';
 
 function QrisContent() {
     const router = useRouter();
@@ -18,6 +19,7 @@ function QrisContent() {
 
     // QR State
     const [qrValue, setQrValue] = useState('');
+    const [qrImageUrl, setQrImageUrl] = useState(''); // Base64 data URL for <img>
     const [paymentUrl, setPaymentUrl] = useState(""); // Track Duitku URL
     const [loadingQr, setLoadingQr] = useState(false);
     const [error, setError] = useState(null);
@@ -362,8 +364,8 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
-                    if (json.data.qrUrl) {
-                        setQrValue(json.data.qrUrl);
+                    if (json.data.qrString) {
+                        setQrValue(json.data.qrString);
                         // Update amount if backend says so (e.g. fees)
                         if (json.data.amount) setAmount(json.data.amount);
                     } else if (json.data.paymentUrl) {
@@ -426,6 +428,22 @@ function QrisContent() {
         const s = String(sec % 60).padStart(2, '0');
         return `${m}:${s}`;
     };
+
+    // --- CLIENT-SIDE QR CODE RENDERER ---
+    useEffect(() => {
+        if (!qrValue) return;
+        QRCode.toDataURL(qrValue, {
+            width: 280,
+            margin: 2,
+            errorCorrectionLevel: 'M',
+            color: { dark: '#000000', light: '#FFFFFF' }
+        })
+        .then(url => setQrImageUrl(url))
+        .catch(err => {
+            if (process.env.NODE_ENV !== 'production') console.error('QR Render Error:', err);
+            setError('Gagal merender QR Code.');
+        });
+    }, [qrValue]);
 
     return (
         <div className="app">
@@ -496,10 +514,10 @@ function QrisContent() {
                         <div className="spinner"></div>
                     ) : error ? (
                         <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
-                    ) : qrValue ? (
+                    ) : qrImageUrl ? (
                         <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
                             <img 
-                                src={qrValue} 
+                                src={qrImageUrl} 
                                 alt="QRIS Code" 
                                 style={{ height: "auto", maxWidth: "100%", width: "220px", display: 'block' }}
                             />
