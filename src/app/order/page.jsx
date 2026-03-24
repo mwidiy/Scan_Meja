@@ -216,10 +216,14 @@ export default function ReceiptPage() {
                             transactionCode: order.transactionCode,
                             storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, '')
                         });
+                        setIsLoading(false);
                     }, 0);
+                } else {
+                    setIsLoading(false);
                 }
             }).catch(e => {
                 if (process.env.NODE_ENV !== 'production') console.error(e);
+                setIsLoading(false);
             });
         };
 
@@ -243,10 +247,14 @@ export default function ReceiptPage() {
                             transactionCode: order.transactionCode,
                             storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, '')
                         });
+                        setIsLoading(false);
                     }, 0);
+                } else {
+                    setIsLoading(false);
                 }
             }).catch(e => {
                 if (process.env.NODE_ENV !== 'production') console.error(e);
+                setIsLoading(false);
             });
         };
 
@@ -283,6 +291,28 @@ export default function ReceiptPage() {
         fetchStoreName();
 
     }, []);
+
+    // --- AUTO-TRACKER UNTUK HALAMAN STATUS ---
+    useEffect(() => {
+        if (orderData && orderData.transactionCode && orderData.transactionCode !== '-' && orderData.transactionCode !== 'Memproses...') {
+            try {
+                const currentHistoryRaw = localStorage.getItem('order_history');
+                let currentHistory = [];
+                if (currentHistoryRaw) {
+                    currentHistory = JSON.parse(currentHistoryRaw);
+                }
+                
+                if (Array.isArray(currentHistory) && !currentHistory.includes(orderData.transactionCode)) {
+                    const newHistory = [orderData.transactionCode, ...currentHistory].slice(0, 50);
+                    localStorage.setItem('order_history', JSON.stringify(newHistory));
+                } else if (!Array.isArray(currentHistory)) {
+                    localStorage.setItem('order_history', JSON.stringify([orderData.transactionCode]));
+                }
+            } catch (e) {
+                if (process.env.NODE_ENV !== 'production') console.error("Gagal menyimpan riwayat:", e);
+            }
+        }
+    }, [orderData.transactionCode]);
 
     const formatRupiah = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
 
