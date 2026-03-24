@@ -24,7 +24,7 @@ function QrisContent() {
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
-    const [serverExpiry] = useState(() => Date.now() + 300000); // 5 min from load (Hard Timer)
+    const [serverExpiry, setServerExpiry] = useState(() => Date.now() + 300000); // 5 min default, overridden below
 
     // --- REFS FOR CALLBACKS (Prevents useEffect loops) ---
     const handleSuccessRef = useRef();
@@ -142,10 +142,13 @@ function QrisContent() {
                         idParam = response.data.transactionCode;
 
                         // Backup
+                        const newExpiry = Date.now() + 300000;
+                        setServerExpiry(newExpiry);
                         localStorage.setItem('qris_backup', JSON.stringify({
                             id: response.data.transactionCode,
                             numericId: response.data.id,
-                            amount: parsedPayload.totalAmount
+                            amount: parsedPayload.totalAmount,
+                            expiryTime: newExpiry
                         }));
                     } catch (err) {
                         if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
@@ -176,11 +179,25 @@ function QrisContent() {
                 const rawAmt = Number(parsed.subtotal || parsed.totalAmount);
                 amtParam = Math.max(0, Math.min(rawAmt || 0, 99999999));
 
-                // NEW: Backup for refresh resilience (Store both IDs)
+                // NEW: Backup for refresh resilience (Store both IDs and persist Timer)
+                const existingBackupStr = localStorage.getItem('qris_backup');
+                let existingExpiry = Date.now() + 300000;
+                if (existingBackupStr) {
+                    try {
+                        const parsedBkp = JSON.parse(existingBackupStr);
+                        // Make sure we carry over the old timer if the ID matches
+                        if (parsedBkp.expiryTime && parsedBkp.id === idParam) {
+                            existingExpiry = parsedBkp.expiryTime; 
+                        }
+                    } catch(e) {}
+                }
+                setServerExpiry(existingExpiry);
+
                 localStorage.setItem('qris_backup', JSON.stringify({
                     id: idParam,
                     numericId: numId,
-                    amount: amtParam
+                    amount: amtParam,
+                    expiryTime: existingExpiry
                 }));
             }
 
@@ -192,6 +209,7 @@ function QrisContent() {
                     if (!idParam) idParam = b.id;
                     if (!amtParam) amtParam = b.amount;
                     if (!numId) numId = b.numericId;
+                    if (b.expiryTime) setServerExpiry(b.expiryTime);
                 }
             }
 
@@ -222,15 +240,19 @@ function QrisContent() {
     useEffect(() => {
         if (!orderId) return; // Wait until order is established
 
-        // Timer
+        // Sync remaining instantly with real expiry difference
+        const currentDiff = Math.floor((serverExpiry - Date.now()) / 1000);
+        setRemaining(Math.max(0, currentDiff));
+
+        // True Server Timestamp Timer
         const interval = setInterval(() => {
-            setRemaining((prev) => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prev - 1;
-            });
+            const diff = Math.floor((serverExpiry - Date.now()) / 1000);
+            if (diff <= 1) {
+                setRemaining(0);
+                clearInterval(interval);
+                return;
+            }
+            setRemaining(diff);
         }, 1000);
 
         // Socket.IO Listener for Webhook Updates
@@ -340,8 +362,8 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
-                    if (json.data.qrString) {
-                        setQrValue(json.data.qrString);
+                    if (json.data.qrUrl) {
+                        setQrValue(json.data.qrUrl);
                         // Update amount if backend says so (e.g. fees)
                         if (json.data.amount) setAmount(json.data.amount);
                     } else if (json.data.paymentUrl) {
