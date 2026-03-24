@@ -19,6 +19,7 @@ export default function TrackingPage() {
     const [estimatedTime, setEstimatedTime] = useState('-');
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
     const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
+    const [storeSettingKasirQr, setStoreSettingKasirQr] = useState(false); // NEW: Kasir QR Verification Flag
 
 
     // --- WHATSAPP LOGIC (Moved up) ---
@@ -137,6 +138,9 @@ export default function TrackingPage() {
                     // Security: Validate WhatsApp number format
                     const wa = String(order.store.whatsappNumber).replace(/\D/g, '');
                     if (wa.length >= 8 && wa.length <= 15) setWhatsappNumber(wa);
+                }
+                if (order.store && order.store.isKasirQrVerificationEnabled !== undefined) {
+                    setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
                 }
 
                 // TAHAP 71: BUAT KAMUS GAMBAR
@@ -1077,11 +1081,13 @@ export default function TrackingPage() {
                         </div>
                         <div className="footer-row">
                             <button className="btn btn-secondary" onClick={() => setShowCancelModal(true)} style={{ color: '#DC2626', borderColor: '#FECACA', flex: 1 }}>Batal</button>
-                            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
-                                // Security: Use sessionStorage instead of URL for redirect
-                                sessionStorage.setItem('kasir_state', JSON.stringify({ items: orderItems, subtotal: total, transactionCode: transactionCode }));
-                                router.push('/Kasir');
-                            }}>Bayar Sekarang</button>
+                            {storeSettingKasirQr && (
+                                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
+                                    // Security: Use sessionStorage instead of URL for redirect
+                                    sessionStorage.setItem('kasir_state', JSON.stringify({ items: orderItems, subtotal: total, transactionCode: transactionCode }));
+                                    router.push('/Kasir');
+                                }}>Bayar Sekarang</button>
+                            )}
                         </div>
                     </div>
                 ) : (
