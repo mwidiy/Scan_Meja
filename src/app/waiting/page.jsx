@@ -143,33 +143,7 @@ export default function TrackingPage() {
                     setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
                 }
 
-                // TAHAP 71: BUAT KAMUS GAMBAR
-                getProducts(order.storeId).then(rawData => {
-                    let productsList = [];
-                    if (Array.isArray(rawData)) {
-                        productsList = rawData;
-                    } else if (rawData && Array.isArray(rawData.data)) {
-                        productsList = rawData.data;
-                    } else if (rawData && Array.isArray(rawData.products)) {
-                        productsList = rawData.products;
-                    }
 
-                    const mockImages = [
-                        '/assets/permen.jpg',
-                        '/assets/Jus-Alpukat--0-5205f40b71175c63.jpg',
-                        '/assets/bakso.jpeg',
-                        '/assets/soto.jpg',
-                        '/assets/soto-ayam.jpg'
-                    ];
-
-                    const dict = {};
-                    productsList.forEach((p, idx) => {
-                        if (idx < mockImages.length) {
-                            dict[p.id] = mockImages[idx];
-                        }
-                    });
-                    setMockDictionary(dict);
-                }).catch(e => console.error("Error fetching dictionary:", e));
 
             }
         }).catch(err => { if (process.env.NODE_ENV !== 'production') console.error("Error refreshing data:", err); })
