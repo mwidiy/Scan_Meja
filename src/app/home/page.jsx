@@ -778,7 +778,7 @@ export default function HomePixelPerfect() {
                             className={`text-[1.9rem] font-extrabold text-[#111827] mb-[18px] transition-all duration-300 origin-left 
                             ${isSearchMode ? 'hidden' : 'block'}`}
                         >
-                            Selamat Datang!
+                            Selamat Datang BUGGG!
                         </h1>
                         <div className={`transition-all duration-300 flex items-center ${isSearchMode ? 'gap-[10px] bg-[#F3F4F6] rounded-[10px] px-[10px] py-[8px]' : 'search-box'}`}>
 
