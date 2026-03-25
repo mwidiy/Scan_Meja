@@ -75,7 +75,7 @@ export default function HomePixelPerfect() {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState({});
-    const [mockStock, setMockStock] = useState({}); // TAHAP 74: Dynamic Mock Stock
+
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [activeBannerIndex, setActiveBannerIndex] = useState(0);
     const [customerTable, setCustomerTable] = useState(null);
@@ -166,26 +166,6 @@ export default function HomePixelPerfect() {
                 : (Array.isArray(prodsRes) ? prodsRes : []);
 
 
-            // TAHAP 74: Bikin stok pura-pura biar kelihat real
-            let localStock = {};
-            try {
-                const storedStock = localStorage.getItem('mock_stock');
-                if (storedStock) localStock = JSON.parse(storedStock);
-            } catch (e) { }
-
-            let isStockUpdated = false;
-            productsData.forEach(p => {
-                if (localStock[p.id] === undefined) {
-                    // Beri stok random 12 sampai 65 untuk produk baru
-                    localStock[p.id] = Math.floor(Math.random() * (65 - 12 + 1)) + 12;
-                    isStockUpdated = true;
-                }
-            });
-
-            if (isStockUpdated) {
-                localStorage.setItem('mock_stock', JSON.stringify(localStock));
-            }
-            setMockStock(localStock);
 
             setProducts(productsData);
         } catch (error) {
@@ -844,7 +824,7 @@ export default function HomePixelPerfect() {
                                             style={banner.isStatic ? { background: 'linear-gradient(45deg, #2C3E50, #34495E)' } : {}}
                                         >
                                             <img
-                                                src={banner.image && banner.image.startsWith('/assets/') ? banner.image : (banner.isStatic ? banner.image : getImageUrl(banner.image))}
+                                                src={banner.isStatic ? banner.image : getImageUrl(banner.image)}
                                                 className={`w-[90px] h-[90px] rounded-[18px] flex-shrink-0 ${banner.isStatic ? 'object-contain p-[5px] bg-white/10' : 'object-cover bg-gray-600'}`}
                                                 alt={banner.title}
                                                 loading="lazy"
@@ -955,14 +935,13 @@ export default function HomePixelPerfect() {
                                             </div>
                                         )}
                                         <img
-                                            src={item.image && item.image.startsWith('/assets/') ? item.image : (item.image ? getImageUrl(item.image) : "/assets/logo.png")}
+                                            src={getImageUrl(item.image)}
                                             alt={item.name}
-                                            className="w-full h-full object-cover transition-transform duration-[400ms] hover:scale-105"
+                                            className={`w-full h-full object-cover transition-transform duration-[400ms] hover:scale-105 ${isHabis ? 'grayscale opacity-60' : ''}`}
                                             loading="lazy"
                                             onError={(e) => {
-                                                if (e.target.src !== `${window.location.origin}/assets/logo.png`) {
-                                                    e.target.src = "/assets/logo.png";
-                                                }
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = '/assets/logo.png';
                                             }}
                                         />
 
@@ -1014,26 +993,14 @@ export default function HomePixelPerfect() {
                                         )}
                                     </div>
 
-                                    <h3 className={`text-[0.95rem] font-bold mt-[2px] mb-[0px] leading-[1.3] ${isHabis ? 'text-gray-400' : 'text-[#111827]'}`}>
+                                    <h3 className={`text-[0.95rem] font-bold mt-[2px] mb-[2px] leading-[1.3] ${isHabis ? 'text-gray-400' : 'text-[#111827]'}`}>
                                         {item.name}
                                     </h3>
-
-                                    {/* TAHAP 74: Deskripsi Singkat untuk Duitku KYC */}
-                                    <p className={`text-[0.7rem] line-clamp-2 leading-[1.2] mt-[2px] mb-[4px] ${isHabis ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {item.description || item.desc || 'Disajikan dengan kehangatan dan selalu mengutamakan rasa untuk dinikmati bersama.'}
-                                    </p>
-
                                     <div className={`text-[0.9rem] font-bold ${isHabis ? 'text-gray-400' : 'text-[#EF4444]'}`}>
                                         {formatRupiah(item.price)}
                                     </div>
-
-                                    {/* TAHAP 74: Stok Dinamis Penipu Duitku KYC */}
-                                    {isHabis ? (
-                                        <div className="text-[0.75rem] font-bold text-gray-400 mt-[2px]">Stok Habis</div>
-                                    ) : (
-                                        <div className="text-[0.7rem] font-medium text-emerald-600 mt-[2px]">
-                                            Sisa: <span className="font-bold">{mockStock[item.id] !== undefined ? mockStock[item.id] : '...'}</span> porsi
-                                        </div>
+                                    {isHabis && (
+                                        <div className="text-[0.75rem] font-bold text-gray-400 mt-1">Stok Habis</div>
                                     )}
                                 </div>
                             );
