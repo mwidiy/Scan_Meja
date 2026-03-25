@@ -103,13 +103,9 @@ export const getImageUrl = (urlOrFilename) => {
 
     // Jika URL lengkap (ada http/https)
     if (urlOrFilename.startsWith('http')) {
-        // BYPASS & FIX: Do not rewrite to local API, but instead fix Cloudinary blocking issue
-        // ISP Indonesia (Telkom/Indihome) sering block `res.cloudinary.com` mengakibatkan net::ERR_CONNECTION_RESET
-        // Solusinya: Pakai HTTPS dan ganti host ke `res-console.cloudinary.com`
+        // Cloudinary URLs: just enforce HTTPS, don't rewrite hostname
         if (urlOrFilename.includes('cloudinary.com')) {
-            let safeUrl = urlOrFilename.replace('http://', 'https://');
-            safeUrl = safeUrl.replace('res.cloudinary.com', 'res-console.cloudinary.com');
-            return safeUrl;
+            return urlOrFilename.replace('http://', 'https://');
         }
 
         try {
