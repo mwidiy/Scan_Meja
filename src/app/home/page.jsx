@@ -458,16 +458,6 @@ export default function HomePixelPerfect() {
             const current = parseInt(prev[id]) || 0;
             const next = current + delta;
 
-            // TAHAP 74: Dynamic Mock Stock Adjustment
-            setMockStock(prevStock => {
-                const s = { ...prevStock };
-                if (s[id] !== undefined) {
-                    // Reduce stock when adding to cart, increase when removing
-                    s[id] = Math.max(0, s[id] - delta);
-                    localStorage.setItem('mock_stock', JSON.stringify(s));
-                }
-                return s;
-            });
 
             if (next <= 0) {
                 const copy = { ...prev };
@@ -483,16 +473,7 @@ export default function HomePixelPerfect() {
         const raw = e.target.value;
         if (raw === '') {
             setCart(prev => {
-                // TAHAP 74: Revert mock stock if cart item is cleared
-                const currentQty = prev[id] || 0;
-                setMockStock(prevStock => {
-                    const s = { ...prevStock };
-                    if (s[id] !== undefined) {
-                        s[id] += currentQty;
-                        localStorage.setItem('mock_stock', JSON.stringify(s));
-                    }
-                    return s;
-                });
+
                 const copy = { ...prev };
                 delete copy[id];
                 return copy;
@@ -504,15 +485,7 @@ export default function HomePixelPerfect() {
             const currentQty = prev[id] || 0;
             const diff = val - currentQty;
 
-            // TAHAP 74: Adjust mock stock based on diff
-            setMockStock(prevStock => {
-                const s = { ...prevStock };
-                if (s[id] !== undefined) {
-                    s[id] = Math.max(0, s[id] - diff);
-                    localStorage.setItem('mock_stock', JSON.stringify(s));
-                }
-                return s;
-            });
+
 
             if (val <= 0) {
                 const copy = { ...prev };
@@ -560,15 +533,7 @@ export default function HomePixelPerfect() {
             const currentQty = prev[id] || 0;
             const diff = target - currentQty;
 
-            // TAHAP 74: Sync mock stock with modal add-to-cart action
-            setMockStock(prevStock => {
-                const s = { ...prevStock };
-                if (s[id] !== undefined) {
-                    s[id] = Math.max(0, s[id] - diff);
-                    localStorage.setItem('mock_stock', JSON.stringify(s));
-                }
-                return s;
-            });
+
 
             const copy = { ...prev };
             if (target <= 0) delete copy[id];
