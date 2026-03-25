@@ -746,13 +746,13 @@ export default function HomePixelPerfect() {
                     <div className="flex items-center gap-[8px]">
                         <div className="h-[38px] max-w-[140px] flex items-center">
                             <img
-                                src={store?.image ? getImageUrl(store.image) : "/assets/logo.svg"}
+                                src={store?.logo ? getImageUrl(store.logo) : "/assets/logo.png"}
                                 alt="Logo"
                                 className="h-full w-auto object-contain"
                                 onError={(e) => {
-                                    if (e.target.src !== `${window.location.origin}/assets/logo.svg`) {
-                                        e.target.src = "/assets/logo.svg";
-                                    }
+                                    e.target.style.display = 'none';
+                                    const safeName = (store?.name || 'Resto').replace(/[<>&"']/g, '').substring(0, 30);
+                                    e.target.parentElement.textContent = safeName;
                                 }}
                             />
                         </div>
@@ -828,11 +828,7 @@ export default function HomePixelPerfect() {
                                                 className={`w-[90px] h-[90px] rounded-[18px] flex-shrink-0 ${banner.isStatic ? 'object-contain p-[5px] bg-white/10' : 'object-cover bg-gray-600'}`}
                                                 alt={banner.title}
                                                 loading="lazy"
-                                                onError={(e) => {
-                                                    if (e.target.src !== `${window.location.origin}/assets/banner.jpeg`) {
-                                                        e.target.src = "/assets/banner.jpeg";
-                                                    }
-                                                }}
+                                                onError={(e) => e.target.style.display = 'none'}
                                             />
                                             <div className="flex flex-col justify-center gap-0">
                                                 <h3 className="text-[1rem] font-bold text-white leading-[1.15] mb-[-2px]">
