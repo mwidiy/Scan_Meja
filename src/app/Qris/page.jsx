@@ -429,6 +429,62 @@ function QrisContent() {
         return `${m}:${s}`;
     };
 
+    // --- DOWNLOAD QR AS PNG ---
+    const handleDownloadQr = useCallback(() => {
+        if (!qrImageUrl) return;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const W = 360, H = 460;
+        canvas.width = W;
+        canvas.height = H;
+
+        // Background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.roundRect(0, 0, W, H, 20);
+        ctx.fill();
+
+        // Header label
+        ctx.fillStyle = '#2C3E50';
+        ctx.font = 'bold 18px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pembayaran QRIS', W / 2, 40);
+
+        // Amount
+        ctx.fillStyle = '#1F2937';
+        ctx.font = 'bold 28px Poppins, sans-serif';
+        ctx.fillText(`Rp ${(amount || 0).toLocaleString('id-ID')}`, W / 2, 78);
+
+        // Draw QR image
+        const img = new Image();
+        img.onload = () => {
+            const qrSize = 260;
+            const qrX = (W - qrSize) / 2;
+            const qrY = 100;
+
+            // QR border
+            ctx.strokeStyle = '#E2E8F0';
+            ctx.lineWidth = 3;
+            ctx.roundRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 16);
+            ctx.stroke();
+
+            ctx.drawImage(img, qrX, qrY, qrSize, qrSize);
+
+            // Footer text
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '13px Poppins, sans-serif';
+            ctx.fillText('Scan dengan GoPay, OVO, Dana, ShopeePay', W / 2, qrY + qrSize + 35);
+            ctx.fillText('atau Mobile Banking Anda', W / 2, qrY + qrSize + 55);
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.download = `qris-payment-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        img.src = qrImageUrl;
+    }, [qrImageUrl, amount]);
+
     // --- CLIENT-SIDE QR CODE RENDERER ---
     useEffect(() => {
         if (!qrValue) return;
@@ -489,6 +545,19 @@ function QrisContent() {
                 .wallets { display:flex; justify-content:center; gap:12px; margin-top:24px; opacity:0.8; }
                 .wallet-icon { width:42px; height:42px; background:#FFF; border-radius:10px; border:1px solid #E2E8F0; display:flex; align-items:center; justify-content:center; padding: 6px; }
                 .wallet-icon img { width: 100%; height: 100%; object-fit: contain; }
+
+                .btn-download-qr {
+                    display:inline-flex; align-items:center; gap:8px;
+                    background:linear-gradient(135deg, #3B82F6, #2563EB);
+                    color:#FFF; border:none; border-radius:14px;
+                    padding:12px 24px; font-size:0.9rem; font-weight:600;
+                    cursor:pointer; margin-bottom:20px;
+                    box-shadow:0 4px 14px rgba(59,130,246,0.35);
+                    transition:all 0.2s ease;
+                    font-family:'Poppins',sans-serif;
+                }
+                .btn-download-qr:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(59,130,246,0.45); }
+                .btn-download-qr:active { transform:translateY(0); }
             `}</style>
 
             <div className="header">
@@ -524,6 +593,17 @@ function QrisContent() {
                         </div>
                     ) : null}
                 </div>
+
+                {qrImageUrl && !loadingQr && !error && (
+                    <button className="btn-download-qr" onClick={handleDownloadQr} id="btn-download-qr">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Simpan QR
+                    </button>
+                )}
 
                 <img src="/assets/Qris_Logo.svg" alt="QRIS" style={{ height: '28px', marginBottom: '20px', opacity: 0.8 }} />
 
