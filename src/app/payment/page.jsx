@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createOrder } from '../../services/api';
+import { createOrder, getStore } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Skeleton Component moved outside to prevent re-creation on render
@@ -125,6 +125,19 @@ export default function PaymentPage() {
                 } catch (e) { /* ignore */ }
             }
 
+            // TAHAP 57: Real-time Cash Payment Mode Fetch
+            let activeCashMode = orderState.cashPaymentMode || 'post';
+            if (selectedMethod === 'cash') {
+                try {
+                    const storeRes = await getStore(finalStoreId);
+                    if (storeRes && storeRes.data && storeRes.data.cashPaymentMode) {
+                        activeCashMode = storeRes.data.cashPaymentMode;
+                    }
+                } catch (e) {
+                    if (process.env.NODE_ENV !== 'production') console.error("Failed to fetch real-time store settings", e);
+                }
+            }
+
             const payload = {
                 customerName: finalName,
                 tableId: finalTableId,
@@ -136,17 +149,11 @@ export default function PaymentPage() {
                 })),
                 totalAmount: orderState.subtotal,
                 paymentMethod: selectedMethod,
-                paymentStatus: (() => {
-                    if (selectedMethod === 'cash') {
-                        // PRE mode: Cash paid upfront (like QRIS)
-                        const cashMode = orderState.cashPaymentMode || 'post';
-                        return cashMode === 'pre' ? 'Paid' : 'Unpaid';
-                    }
-                    return 'Unpaid'; // QRIS always starts unpaid until webhook confirms
-                })(),
+                paymentStatus: 'Unpaid', // TAHAP 56: Backend handles WaitingPayment VS Pending automatically.
                 orderType: orderState.orderType,
                 note: orderState.notes,
-                deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null
+                deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null,
+                cashPaymentMode: activeCashMode // Include this so /Kasir or /order knows the context
             };
 
             // TAHAP 36: OPTIMISTIC CHECKOUT
@@ -166,7 +173,11 @@ export default function PaymentPage() {
             // 3. Navigate instantly (0 latency API block)
             if (selectedMethod === 'qris') {
                 router.push('/Qris');
+            } else if (selectedMethod === 'cash' && activeCashMode === 'pre') {
+                // PRE mode: Cash paid upfront via Kasir Scan
+                router.push('/Kasir');
             } else {
+                // POST mode or fallback
                 router.push('/order');
             }
 

@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QRCode from 'react-qr-code';
 import { io } from 'socket.io-client';
-import { getDynamicUrl } from '../../services/api';
+import { getDynamicUrl, createOrder } from '../../services/api';
 
 function KasirContent() {
     const router = useRouter();
@@ -12,6 +12,7 @@ function KasirContent() {
     const [orderCode, setOrderCode] = useState('-');
     const [tableNumber, setTableNumber] = useState('-');
     const [customerName, setCustomerName] = useState('-');
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
     // Removed qrUrl state
 
@@ -22,8 +23,9 @@ function KasirContent() {
         const guardKasir = () => {
             const p_id = searchParams.get('orderId') || searchParams.get('id') || searchParams.get('transactionCode');
             const s_raw = sessionStorage.getItem('kasir_state') || searchParams.get('state'); // Check both
+            const pre_raw = sessionStorage.getItem('pending_order_payload'); // PRE cash payload
 
-            if (!p_id && !s_raw) {
+            if (!p_id && !s_raw && !pre_raw) {
                 router.replace('/home');
                 return false;
             }
@@ -123,7 +125,8 @@ function KasirContent() {
                 }
             } catch (e) { }
 
-            router.push('/waiting');
+            // PRE cash acts like QRIS: directly show receipt "LUNAS".
+            router.push(`/order?orderId=${finalData.transactionCode}`);
         };
 
         // Also listen for connect_error
@@ -138,6 +141,47 @@ function KasirContent() {
 
     useEffect(() => {
         try {
+            // TAHAP 56: Handle PRE Cash "pending_order_payload" background creation
+            const pendingPayloadRaw = sessionStorage.getItem('pending_order_payload');
+            if (pendingPayloadRaw) {
+                const parsedPayload = JSON.parse(pendingPayloadRaw);
+                setIsCreatingOrder(true);
+
+                const executeOrder = async () => {
+                    try {
+                        const response = await createOrder(parsedPayload);
+                        sessionStorage.removeItem('pending_order_payload');
+
+                        const finalState = {
+                            items: parsedPayload.items,
+                            subtotal: parsedPayload.totalAmount,
+                            orderType: parsedPayload.orderType,
+                            method: parsedPayload.paymentMethod,
+                            transactionCode: response.data.transactionCode,
+                            orderId: response.data.id,
+                            tableName: parsedPayload.tableName || "Takeaway",
+                            customerName: parsedPayload.customerName
+                        };
+                        sessionStorage.setItem('kasir_state', JSON.stringify(finalState));
+                        sessionStorage.setItem('post_payment_state', JSON.stringify(finalState));
+
+                        setAmount(parsedPayload.totalAmount);
+                        setOrderCode(response.data.transactionCode);
+                        setCustomerName(parsedPayload.customerName);
+                        if (parsedPayload.tableName) setTableNumber(parsedPayload.tableName);
+                    } catch (err) {
+                        if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
+                        alert("Pembuatan pesanan gagal. Silakan kembali dan coba lagi (Error: " + (err.message || 'Server sibuk') + ").");
+                        sessionStorage.removeItem('pending_order_payload');
+                        router.replace('/payment');
+                    } finally {
+                        setIsCreatingOrder(false);
+                    }
+                };
+                executeOrder();
+                return; // Wait until API finishes before standard kasir_state read
+            }
+
             // Security: Read from sessionStorage instead of URL
             const raw = sessionStorage.getItem('kasir_state') || searchParams.get('state'); // Fallback for now, but migrating
 
@@ -236,12 +280,19 @@ function KasirContent() {
                     <div className="qr-wrapper">
                         <div className="qr-card">
                             <div className="qr-inner" style={{ padding: '16px' }}>
-                                <QRCode
-                                    value={orderCode !== '-' ? orderCode : 'Loading...'}
-                                    size={256}
-                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                                    viewBox={`0 0 256 256`}
-                                />
+                                {isCreatingOrder ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 256, gap: 16 }}>
+                                        <div className="spinner"></div>
+                                        <div style={{ fontSize: '14px', color: '#64748B', fontWeight: 500 }}>Memproses Pesanan...</div>
+                                    </div>
+                                ) : (
+                                    <QRCode
+                                        value={orderCode !== '-' ? orderCode : 'Loading...'}
+                                        size={256}
+                                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                        viewBox={`0 0 256 256`}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -624,6 +675,12 @@ function KasirPageLayout() {
             display:flex;
             align-items:flex-start;
         }
+
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #E2E8F0; border-top-color: #FACC15; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
             <div className="app">
                 <header className="kasir-header">
