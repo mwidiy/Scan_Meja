@@ -207,6 +207,35 @@ export default function TrackingPage() {
                 if (parsed.transactionCode) {
                     currentCode = String(parsed.transactionCode).substring(0, 50).replace(/[^a-zA-Z0-9\-_]/g, '');
                 }
+
+                // TAHAP 56: Optimistic UI Hydration for Instant Navigation
+                if (parsed.status) {
+                    let mappedStatus = 'received';
+                    if (parsed.status === 'Processing') mappedStatus = 'preparing';
+                    else if (parsed.status === 'Completed' || parsed.status === 'Ready') mappedStatus = 'ready';
+                    else if (parsed.status === 'Cancelled') mappedStatus = 'cancelled';
+                    setTimeout(() => setOrderStatus(mappedStatus), 0);
+
+                    setTimeout(() => {
+                        if (parsed.status === 'WaitingPayment') setOrdersAhead("Menunggu Pembayaran QRIS");
+                        else if (parsed.status === 'Pending') {
+                            const peopleAhead = parsed.queuePosition && parsed.queuePosition > 0 ? parsed.queuePosition - 1 : 0;
+                            setOrdersAhead(peopleAhead === 0 ? `Giliran Anda Selanjutnya!` : `Sisa ${peopleAhead} Antrean di Depan Anda`);
+                        }
+                        else if (parsed.status === 'Processing') setOrdersAhead("Sedang Disiapkan");
+                        else if (parsed.status === 'Cancelled') setOrdersAhead("Pesanan Dibatalkan");
+                        else setOrdersAhead("Pesanan Selesai");
+                    }, 0);
+                }
+                if (parsed.paymentStatus) {
+                    setTimeout(() => setPaymentStatus(parsed.paymentStatus === 'Paid' ? 'paid' : 'unpaid'), 0);
+                }
+                if (parsed.customerName) {
+                    setTimeout(() => setCustomerName(String(parsed.customerName).substring(0, 30).replace(/[<>&"']/g, '')), 0);
+                }
+                if (parsed.predictedServiceTime) {
+                    setTimeout(() => setEstimatedTime(`Estimasi selesai jam ${parsed.predictedServiceTime}`), 0);
+                }
             }
 
             // --- FALLBACK: DIRECT PARAMETER ---

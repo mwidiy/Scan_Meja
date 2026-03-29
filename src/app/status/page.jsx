@@ -111,7 +111,12 @@ export default function StatusPage() {
         image: item.product?.image ? getImageUrl(item.product.image) : '/assets/placeholder.png'
       })),
       transactionCode: order.transactionCode,
-      queueNumber: order.queueNumber ? String(order.queueNumber).replace(/[^0-9\-]/g, '') : '-'
+      queueNumber: order.queueNumber ? String(order.queueNumber).replace(/[^0-9\-]/g, '') : '-',
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      customerName: order.customerName || 'Pelanggan',
+      queuePosition: order.queuePosition || 0,
+      predictedServiceTime: order.predictedServiceTime || null
     };
     sessionStorage.setItem('waiting_state', JSON.stringify(safeOrder));
     router.push('/waiting');
@@ -601,12 +606,12 @@ export default function StatusPage() {
                     <div className="div-8">
                       <div className="span-wrapper">
                         <span className="span" style={{
-                          backgroundColor: activeTab === 'completed' ? '#DCFCE7' : '#EFF6FF'
+                          backgroundColor: order.status === 'Cancelled' ? '#FEE2E2' : activeTab === 'completed' ? '#DCFCE7' : '#EFF6FF'
                         }}>
                           <span className="text-wrapper-7" style={{
-                            color: activeTab === 'completed' ? '#166534' : '#2563EB'
+                            color: order.status === 'Cancelled' ? '#DC2626' : activeTab === 'completed' ? '#166534' : '#2563EB'
                           }}>
-                            {activeTab === 'completed' ? 'Pesanan Selesai' : 'Sedang Disiapkan'}
+                            {order.status === 'Cancelled' ? 'Dibatalkan' : activeTab === 'completed' ? 'Pesanan Selesai' : 'Sedang Disiapkan'}
                           </span>
                         </span>
                       </div>

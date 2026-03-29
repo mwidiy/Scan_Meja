@@ -330,16 +330,6 @@ function KasirContent() {
                             </div>
                         </div>
                     </div>
-                    <div className="info-card yellow" style={{ background: '#EFF6FF', outlineColor: '#BFDBFE' }}>
-                        <div className="info-row-flex">
-                            <div className="info-icon">
-                                <img src="/assets/Information_Icon.svg" alt="Info Pembayaran" />
-                            </div>
-                            <div className="info-text-wrap soft" style={{ color: '#1E40AF' }}>
-                                Pesanan dapat dibayar<br />setelah pesanan diantar.
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
