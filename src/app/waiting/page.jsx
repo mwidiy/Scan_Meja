@@ -1088,6 +1088,7 @@ export default function TrackingPage() {
                                 <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
                                     // Security: Use sessionStorage instead of URL for redirect
                                     sessionStorage.setItem('kasir_state', JSON.stringify({ items: orderItems, subtotal: total, transactionCode: transactionCode }));
+                                    sessionStorage.setItem('kasir_back_url', '/waiting');
                                     router.push('/Kasir');
                                 }}>Bayar Sekarang</button>
                             )}

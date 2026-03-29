@@ -674,7 +674,11 @@ function KasirPageLayout() {
       `}</style>
             <div className="app">
                 <header className="kasir-header">
-                    <button className="btn-back" onClick={() => router.push('/waiting')}>
+                    <button className="btn-back" onClick={() => {
+                        let backUrl = '/home';
+                        try { backUrl = sessionStorage.getItem('kasir_back_url') || '/home'; } catch (e) { }
+                        router.push(backUrl);
+                    }}>
                         <img src="/assets/Back.svg" alt="Kembali" />
                     </button>
                     <div className="header-title-wrap">

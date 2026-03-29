@@ -175,6 +175,7 @@ export default function PaymentPage() {
                 router.push('/Qris');
             } else if (selectedMethod === 'cash' && activeCashMode === 'pre') {
                 // PRE mode: Cash paid upfront via Kasir Scan
+                sessionStorage.setItem('kasir_back_url', '/payment');
                 router.push('/Kasir');
             } else {
                 // POST mode or fallback
