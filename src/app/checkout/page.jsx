@@ -288,10 +288,7 @@ export default function CheckoutPage() {
             alert('Belum ada pesanan.');
             return;
         }
-        if (!isAgreed) {
-            alert('Mohon centang persetujuan Syarat & Ketentuan sebelum melanjutkan pembayaran.');
-            return;
-        }
+
         if (orderType === 'delivery' && (!location || !location.trim())) {
             alert('Mohon masukkan lokasi antar.');
             openLocationModal();
