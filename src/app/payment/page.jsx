@@ -136,7 +136,14 @@ export default function PaymentPage() {
                 })),
                 totalAmount: orderState.subtotal,
                 paymentMethod: selectedMethod,
-                paymentStatus: selectedMethod === 'qris' ? 'Unpaid' : 'Unpaid', // Cash is unpaid until cashier confirms
+                paymentStatus: (() => {
+                    if (selectedMethod === 'cash') {
+                        // PRE mode: Cash paid upfront (like QRIS)
+                        const cashMode = orderState.cashPaymentMode || 'post';
+                        return cashMode === 'pre' ? 'Paid' : 'Unpaid';
+                    }
+                    return 'Unpaid'; // QRIS always starts unpaid until webhook confirms
+                })(),
                 orderType: orderState.orderType,
                 note: orderState.notes,
                 deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null

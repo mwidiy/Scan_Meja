@@ -49,7 +49,7 @@ export default function ReceiptPage() {
                         })), // Note: We might lack exact names here, but for cash order usually the user knows what they ordered. Wait for backend to fix it.
                         method: parsedPayload.paymentMethod,
                         date: new Date().toISOString(),
-                        status: 'unpaid',
+                        status: parsedPayload.paymentStatus === 'Paid' ? 'paid' : 'unpaid',
                         storeName: 'Memproses...'
                     }));
                     // TAHAP 52 FIX: Jangan setIsLoading(false) di sini. Biarkan loading muter.
@@ -301,7 +301,7 @@ export default function ReceiptPage() {
                 if (currentHistoryRaw) {
                     currentHistory = JSON.parse(currentHistoryRaw);
                 }
-                
+
                 if (Array.isArray(currentHistory) && !currentHistory.includes(orderData.transactionCode)) {
                     const newHistory = [orderData.transactionCode, ...currentHistory].slice(0, 50);
                     localStorage.setItem('order_history', JSON.stringify(newHistory));

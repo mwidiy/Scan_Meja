@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createOrder, getImageUrl, getProducts } from '../../services/api';
+import { createOrder, getImageUrl, getProducts, getStore } from '../../services/api';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -124,6 +124,31 @@ export default function CheckoutPage() {
             }
         };
         fetchRecommendations();
+
+        // Fetch Store Settings (cashPaymentMode)
+        const fetchStoreSettings = async () => {
+            let storeId = null;
+            try {
+                const storedTable = localStorage.getItem('customer_table');
+                if (storedTable) {
+                    const parsed = JSON.parse(storedTable);
+                    if (parsed && typeof parsed === 'object' && parsed.location?.storeId) {
+                        storeId = parseInt(parsed.location.storeId) || null;
+                    }
+                }
+            } catch (e) { }
+
+            if (storeId) {
+                try {
+                    const storeRes = await getStore(storeId);
+                    if (storeRes && storeRes.success && storeRes.data) {
+                        const mode = storeRes.data.cashPaymentMode || 'post';
+                        try { sessionStorage.setItem('store_cashPaymentMode', mode); } catch (e) { }
+                    }
+                } catch (e) { }
+            }
+        };
+        fetchStoreSettings();
 
         // TAHAP 54: Prefetching Route (Instant Navigation)
         router.prefetch('/payment');
@@ -290,7 +315,8 @@ export default function CheckoutPage() {
             orderType: orderType,
             location: orderType === 'delivery' ? location : null,
             notes: notes,
-            storeId: storeId
+            storeId: storeId,
+            cashPaymentMode: (() => { try { return sessionStorage.getItem('store_cashPaymentMode') || 'post'; } catch (e) { return 'post'; } })()
         };
         // Security: Use sessionStorage instead of URL for state transfer
         try { sessionStorage.setItem('payment_state', JSON.stringify(stateData)); } catch (e) { }
@@ -610,7 +636,7 @@ export default function CheckoutPage() {
                         <span>Saya telah membaca dan menyetujui <a onClick={(e) => { e.preventDefault(); router.push('/bantuan'); }} style={{ color: '#2563EB', fontWeight: '600', textDecoration: 'underline' }}>Syarat & Ketentuan</a> serta Kebijakan Privasi restoran ini. Refund berlaku untuk pesanan batal.</span>
                     </label>
                     <div style={{ marginTop: '12px', padding: '10px', background: '#EFF6FF', borderRadius: '12px', fontSize: '0.75rem', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '1.2rem' }}>📞</span> 
+                        <span style={{ fontSize: '1.2rem' }}>📞</span>
                         <span>Butuh Bantuan? WhatsApp Kasir: <a href="https://wa.me/62895808953200" style={{ fontWeight: '700', textDecoration: 'none', color: '#1E3A8A' }}>0895808953200</a></span>
                     </div>
                 </div>

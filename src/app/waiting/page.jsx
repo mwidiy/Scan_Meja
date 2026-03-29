@@ -1055,7 +1055,7 @@ export default function TrackingPage() {
                         </div>
                         <div className="footer-row">
                             <button className="btn btn-secondary" onClick={() => setShowCancelModal(true)} style={{ color: '#DC2626', borderColor: '#FECACA', flex: 1 }}>Batal</button>
-                            {storeSettingKasirQr && (
+                            {storeSettingKasirQr && paymentStatus === 'unpaid' && (
                                 <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
                                     // Security: Use sessionStorage instead of URL for redirect
                                     sessionStorage.setItem('kasir_state', JSON.stringify({ items: orderItems, subtotal: total, transactionCode: transactionCode }));
