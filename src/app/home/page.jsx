@@ -720,9 +720,14 @@ export default function HomePixelPerfect() {
                                 alt="Logo"
                                 className="h-full w-auto object-contain"
                                 onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    const safeName = (store?.name || 'Resto').replace(/[<>&"']/g, '').substring(0, 30);
-                                    e.target.parentElement.textContent = safeName;
+                                    // Cek apakah src saat ini BUKAN logo default.
+                                    // Ini penting buat mencegah infinite loop kalau ternyata "/assets/logo.png" juga gagal di-load.
+                                    if (!e.currentTarget.src.includes('/assets/logo.png')) {
+                                        e.currentTarget.src = '/assets/logo.png';
+                                    } else {
+                                        // Kalau "/assets/logo.png" juga gagal di-load (misal filenya nggak ada), baru sembunyiin logonya
+                                        e.currentTarget.style.display = 'none';
+                                    }
                                 }}
                             />
                         </div>
@@ -733,7 +738,6 @@ export default function HomePixelPerfect() {
                     <div className="badge">
                         {(() => {
                             if (!customerTable) return 'Meja ...';
-                            // Parsing logic aman untuk object/string
                             const locationName = typeof customerTable.location === 'object' ? customerTable.location?.name : customerTable.location;
                             return `${locationName || ''} ${customerTable.name}`;
                         })()}
