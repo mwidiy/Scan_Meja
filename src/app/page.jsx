@@ -14,17 +14,6 @@ function WelcomeContent() {
     // --- Logic Check Table ID from URL (Silent) ---
     useEffect(() => {
         let tableId = searchParams.get('tableId');
-        let isDemoMode = false;
-
-        // TAHAP 66: DEMO MODE BYPASS (DUITKU KYC)
-        // Jika tidak ada tableId sama sekali (pengunjung murni buka url utama)
-        if (!tableId) {
-            tableId = 'TBL-12-FGAK'; // Gunakan ID Meja Asli
-            isDemoMode = true;
-            if (process.env.NODE_ENV !== 'production') {
-                console.log("Duitku Demo Mode Activated - Fetching Real Table TBL-12-FGAK");
-            }
-        }
 
         // Security: Sanitize Table ID (Alphanumeric + dash only)
         if (tableId && /^[a-zA-Z0-9\-_]+$/.test(tableId)) {
@@ -41,12 +30,6 @@ function WelcomeContent() {
 
                         localStorage.setItem('customer_table', JSON.stringify(data));
 
-                        if (isDemoMode) {
-                            // TAHAP 72: Hapus bypass nama "Tamu", wajibkan user input nama sendiri
-                            // localStorage.setItem('customerName', 'Tamu');
-                            // router.push('/home'); // Langsung lempar ke Home tanpa minta nama
-                            // return;
-                        }
 
                         // Optional: Clean URL without reload for normal users
                         const newUrl = new URL(window.location.href);
