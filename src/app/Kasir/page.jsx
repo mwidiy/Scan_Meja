@@ -13,6 +13,7 @@ function KasirContent() {
     const [tableNumber, setTableNumber] = useState('-');
     const [customerName, setCustomerName] = useState('-');
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [storeId, setStoreId] = useState(null);
 
     // Removed qrUrl state
 
@@ -215,6 +216,15 @@ function KasirContent() {
                         // Security: Sanitize localStorage read too
                         if (storedName) setCustomerName(String(storedName).substring(0, 30).replace(/[<>&"']/g, ''));
                     }
+                    
+                    try {
+                        const tableData = localStorage.getItem('customer_table');
+                        if (tableData) {
+                            const tParsed = JSON.parse(tableData);
+                            const sId = tParsed?.location?.storeId || tParsed?.storeId;
+                            if (sId) setStoreId(sId);
+                        }
+                    } catch(e){}
                 }, 0);
 
                 // Clean up session if it came from there
@@ -287,7 +297,7 @@ function KasirContent() {
                                     </div>
                                 ) : (
                                     <QRCode
-                                        value={orderCode !== '-' ? orderCode : 'Loading...'}
+                                        value={orderCode !== '-' ? (storeId ? `STORE:${storeId}|${orderCode}` : orderCode) : 'Loading...'}
                                         size={256}
                                         style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                                         viewBox={`0 0 256 256`}

@@ -20,6 +20,7 @@ export default function TrackingPage() {
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
     const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
     const [storeSettingKasirQr, setStoreSettingKasirQr] = useState(false); // NEW: Kasir QR Verification Flag
+    const [storeId, setStoreId] = useState(null);
 
 
     // --- WHATSAPP LOGIC (Moved up) ---
@@ -142,6 +143,7 @@ export default function TrackingPage() {
                 if (order.store && order.store.isKasirQrVerificationEnabled !== undefined) {
                     setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
                 }
+                if (order.storeId) setStoreId(order.storeId);
 
 
 
@@ -1058,7 +1060,7 @@ export default function TrackingPage() {
                                     <div style={{ marginTop: 24, textAlign: 'center', padding: 20, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
                                         <div style={{ fontSize: 16, fontWeight: 700, color: '#DC2626', marginBottom: 16 }}>Refund Dana</div>
                                         <div style={{ background: 'white', padding: 12, display: 'inline-block', borderRadius: 12 }}>
-                                            <QRCode value={transactionCode} size={140} />
+                                            <QRCode value={transactionCode !== '-' ? (storeId ? `STORE:${storeId}|${transactionCode}` : transactionCode) : 'Loading...'} size={140} />
                                         </div>
                                         <p style={{ fontSize: 14, color: '#991B1B', marginTop: 12 }}>Tunjukkan ke kasir untuk refund</p>
                                     </div>
