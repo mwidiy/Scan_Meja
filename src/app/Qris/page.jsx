@@ -366,29 +366,24 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
-                    if (json.data.qrString) {
-                        // If gateway is midtrans, qrString is an image URL
-                        if (json.data.qrString.startsWith('http')) {
-                            setQrImageUrl(json.data.qrString);
-                            setQrValue(json.data.qrString); // Just to satisfy dependency check
-                        } else {
-                            // Homemade dynamic string
-                            setQrValue(json.data.qrString);
-                        }
+                    if (json.data.gateway === 'midtrans' && json.data.paymentUrl) {
+                        // Midtrans Snap Popup URL
+                        setPaymentUrl(json.data.paymentUrl);
+                        if (json.data.amount) setAmount(json.data.amount);
+                    } else if (json.data.qrString) {
+                        // Homemade dynamic string
+                        setQrValue(json.data.qrString);
                         // Update amount if backend says so (e.g. fees)
                         if (json.data.amount) setAmount(json.data.amount);
                     } else if (json.data.paymentUrl) {
-                        // Security: Open Redirect Protection
+                        // Security: Open Redirect Protection (Fallback)
                         const url = json.data.paymentUrl;
-                        // Whitelist domains (Midtrans, Duitku, Xendit, dll)
                         const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
 
                         if (url && IS_SAFE_DOMAIN) {
-                            if (process.env.NODE_ENV !== 'production') console.log("Menunggu aksi pengguna untuk Midtrans URL:", url);
-                            setPaymentUrl(url); // Simpan URL, jangan auto redirect
+                            setPaymentUrl(url);
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
-                            if (process.env.NODE_ENV !== 'production') console.error("Blocked unsafe redirect:", url);
                         }
                     }
                 } else {
@@ -642,6 +637,26 @@ function QrisContent() {
                         <div className="spinner"></div>
                     ) : error ? (
                         <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
+                    ) : gateway === 'midtrans' && paymentUrl ? (
+                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                            <p style={{ fontSize: '12px', marginBottom: '20px', color: '#64748B', fontWeight: 500 }}>Selesaikan pembayaran via Midtrans</p>
+                            <a 
+                                href={paymentUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ 
+                                    background: '#3B82F6', color: '#fff', padding: '14px 28px', 
+                                    borderRadius: '16px', textDecoration: 'none', fontWeight: 'bold',
+                                    boxShadow: '0 4px 14px rgba(59,130,246,0.35)', fontSize: '0.95rem',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 8L22 12L18 16"/><path d="M2 12H22"/>
+                                </svg>
+                                Buka Midtrans
+                            </a>
+                        </div>
                     ) : qrImageUrl ? (
                         <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
                             <img 
