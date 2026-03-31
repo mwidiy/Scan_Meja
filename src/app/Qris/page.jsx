@@ -23,6 +23,7 @@ function QrisContent() {
     const [paymentUrl, setPaymentUrl] = useState(""); // Track Duitku URL
     const [loadingQr, setLoadingQr] = useState(false);
     const [error, setError] = useState(null);
+    const [gateway, setGateway] = useState('homemade'); // 'homemade' | 'midtrans'
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
@@ -349,7 +350,8 @@ function QrisContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         orderId: orderId,
-                        amount: amount
+                        amount: amount,
+                        gateway: gateway
                     })
                 });
 
@@ -365,7 +367,14 @@ function QrisContent() {
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
                     if (json.data.qrString) {
-                        setQrValue(json.data.qrString);
+                        // If gateway is midtrans, qrString is an image URL
+                        if (json.data.qrString.startsWith('http')) {
+                            setQrImageUrl(json.data.qrString);
+                            setQrValue(json.data.qrString); // Just to satisfy dependency check
+                        } else {
+                            // Homemade dynamic string
+                            setQrValue(json.data.qrString);
+                        }
                         // Update amount if backend says so (e.g. fees)
                         if (json.data.amount) setAmount(json.data.amount);
                     } else if (json.data.paymentUrl) {
@@ -396,7 +405,15 @@ function QrisContent() {
         };
 
         fetchQr();
-    }, [orderId, amount, qrValue]); // REMOVE handleSuccess
+    }, [orderId, amount, qrValue, gateway]); // Added gateway as dependency
+
+    const handleSwitchGateway = (newGateway) => {
+        if (gateway === newGateway) return;
+        setGateway(newGateway);
+        setQrValue('');     // trigger refetch
+        setQrImageUrl('');  // clear image
+        setError(null);
+    };
 
     // 3. Polling Backup (Just in case Webhook/Socket is delayed)
     useEffect(() => {
@@ -487,7 +504,7 @@ function QrisContent() {
 
     // --- CLIENT-SIDE QR CODE RENDERER ---
     useEffect(() => {
-        if (!qrValue) return;
+        if (!qrValue || qrValue.startsWith('http')) return; // Skip if it's already an image URL
         QRCode.toDataURL(qrValue, {
             width: 280,
             margin: 2,
@@ -558,6 +575,33 @@ function QrisContent() {
                 }
                 .btn-download-qr:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(59,130,246,0.45); }
                 .btn-download-qr:active { transform:translateY(0); }
+                
+                .gateway-toggle {
+                    display: flex;
+                    background: #F1F5F9;
+                    border-radius: 12px;
+                    padding: 4px;
+                    margin: 0 auto 24px;
+                    width: 100%;
+                    max-width: 280px;
+                }
+                .gateway-btn {
+                    flex: 1;
+                    padding: 10px;
+                    border: none;
+                    background: transparent;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: var(--text-sub);
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .gateway-btn.active {
+                    background: #FFFFFF;
+                    color: var(--text-main);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                }
             `}</style>
 
             <div className="header">
@@ -577,6 +621,21 @@ function QrisContent() {
 
                 <div className="amount-val">Rp {(amount || 0).toLocaleString('id-ID')}</div>
                 <div className="amount-lbl">Total Pembayaran</div>
+
+                <div className="gateway-toggle">
+                    <button 
+                        className={`gateway-btn ${gateway === 'homemade' ? 'active' : ''}`}
+                        onClick={() => handleSwitchGateway('homemade')}
+                    >
+                        Server Lokal
+                    </button>
+                    <button 
+                        className={`gateway-btn ${gateway === 'midtrans' ? 'active' : ''}`}
+                        onClick={() => handleSwitchGateway('midtrans')}
+                    >
+                        Midtrans
+                    </button>
+                </div>
 
                 <div className="qr-box">
                     {loadingQr ? (
