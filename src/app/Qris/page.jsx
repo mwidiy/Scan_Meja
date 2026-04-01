@@ -13,7 +13,7 @@ function QrisContent() {
     // State
     // State
     const [amount, setAmount] = useState(0);
-    const [remaining, setRemaining] = useState(300); // 5 minutes
+    const [remaining, setRemaining] = useState(900); // 15 minutes
     const [orderState, setOrderState] = useState(null);
     const [orderId, setOrderId] = useState(null);
 
@@ -33,7 +33,7 @@ function QrisContent() {
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
-    const [serverExpiry, setServerExpiry] = useState(() => Date.now() + 300000); // 5 min default, overridden below
+    const [serverExpiry, setServerExpiry] = useState(() => Date.now() + 900000); // 15 min default, overridden below
 
     // --- REFS FOR CALLBACKS (Prevents useEffect loops) ---
     const handleSuccessRef = useRef();
@@ -151,7 +151,7 @@ function QrisContent() {
                         idParam = response.data.transactionCode;
 
                         // Backup
-                        const newExpiry = Date.now() + 300000;
+                        const newExpiry = Date.now() + 900000;
                         setServerExpiry(newExpiry);
                         localStorage.setItem('qris_backup', JSON.stringify({
                             id: response.data.transactionCode,
@@ -190,7 +190,7 @@ function QrisContent() {
 
                 // NEW: Backup for refresh resilience (Store both IDs and persist Timer)
                 const existingBackupStr = localStorage.getItem('qris_backup');
-                let existingExpiry = Date.now() + 300000;
+                let existingExpiry = Date.now() + 900000;
                 if (existingBackupStr) {
                     try {
                         const parsedBkp = JSON.parse(existingBackupStr);
@@ -655,20 +655,23 @@ function QrisContent() {
                 <div className="decor-circle decor-left"></div>
                 <div className="decor-circle decor-right"></div>
 
-                <div className="timer-pill">
-                    {remaining > 0 ? `Selesaikan dalam ${formatTime(remaining)}` : 'Waktu Habis'}
-                </div>
+                {gateway !== 'midtrans' && (
+                    <>
+                        <div className="timer-pill">
+                            {remaining > 0 ? `Selesaikan dalam ${formatTime(remaining)}` : 'Waktu Habis'}
+                        </div>
 
-                <div className="amount-val">Rp {(amount || 0).toLocaleString('id-ID')}</div>
-                <div className="amount-lbl">Total Pembayaran</div>
-
+                        <div className="amount-val">Rp {(amount || 0).toLocaleString('id-ID')}</div>
+                        <div className="amount-lbl">Total Pembayaran</div>
+                    </>
+                )}
 
                 {gateway === 'midtrans' ? (
                     // MIDTRANS EMBED AREA
-                    <div style={{ width: '100%', minHeight: '300px', margin: '0 0 24px 0', border: 'none' }}>
+                    <div style={{ width: '100%', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: '0 auto', border: 'none' }}>
                         {loadingQr && <div className="spinner" style={{ margin: '40px auto' }}></div>}
                         {error && <div style={{ color: 'red', fontSize: '13px', padding: '10px', textAlign: 'center' }}>{error}</div>}
-                        <div id="snap-container" key={`snap-${snapToken}`}></div>
+                        <div id="snap-container" key={`snap-${snapToken}`} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}></div>
                     </div>
                 ) : (
                     // HOMEMADE QR AREA
