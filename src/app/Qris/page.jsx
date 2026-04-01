@@ -356,8 +356,7 @@ function QrisContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         orderId: orderId,
-                        amount: amount,
-                        gateway: gateway
+                        amount: amount
                     })
                 });
 
@@ -372,6 +371,8 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
+                    if (json.data.gateway) setGateway(json.data.gateway);
+
                     if (json.data.gateway === 'midtrans' && json.data.snapToken) {
                         // Midtrans Snap Popup Token
                         setSnapToken(json.data.snapToken);
@@ -408,16 +409,7 @@ function QrisContent() {
         };
 
         fetchQr();
-    }, [orderId, amount, qrValue, gateway]); // Added gateway as dependency
-
-    const handleSwitchGateway = (newGateway) => {
-        if (gateway === newGateway) return;
-        setGateway(newGateway);
-        setQrValue('');     // trigger refetch
-        setQrImageUrl('');  // clear image
-        setSnapToken('');   // clear token
-        setError(null);
-    };
+    }, [orderId, amount, qrValue]); // Fetch completely driven by backend config (no gateway dependency)
 
     // --- MIDTRANS SNAP SCRIPT INJECTOR & AUTO EMBED ---
     useEffect(() => {
@@ -670,20 +662,6 @@ function QrisContent() {
                 <div className="amount-val">Rp {(amount || 0).toLocaleString('id-ID')}</div>
                 <div className="amount-lbl">Total Pembayaran</div>
 
-                <div className="gateway-toggle">
-                    <button 
-                        className={`gateway-btn ${gateway === 'homemade' ? 'active' : ''}`}
-                        onClick={() => handleSwitchGateway('homemade')}
-                    >
-                        Server Lokal
-                    </button>
-                    <button 
-                        className={`gateway-btn ${gateway === 'midtrans' ? 'active' : ''}`}
-                        onClick={() => handleSwitchGateway('midtrans')}
-                    >
-                        Midtrans
-                    </button>
-                </div>
 
                 {gateway === 'midtrans' ? (
                     // MIDTRANS EMBED AREA
