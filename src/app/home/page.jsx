@@ -89,6 +89,14 @@ export default function HomePixelPerfect() {
     // TUGAS BARU: Active Orders Count untuk Badge Notifikasi
     const [activeOrdersCount, setActiveOrdersCount] = useState(0);
 
+    // 1. Instant Load dari Cache (Tugas 1)
+    useEffect(() => {
+        const cachedCount = sessionStorage.getItem('active_orders_count');
+        if (cachedCount) {
+            setActiveOrdersCount(parseInt(cachedCount));
+        }
+    }, []);
+
     // Fetch active orders untuk update badge
     useEffect(() => {
         const fetchOrdersCount = async () => {
@@ -113,6 +121,8 @@ export default function HomePixelPerfect() {
                         order.status !== 'Cancelled'
                     ).length;
                     setActiveOrdersCount(activeCount);
+                    // 2. Simpan ke Cache (Tugas 1)
+                    sessionStorage.setItem('active_orders_count', activeCount.toString());
                 }
             } catch (error) {
                 if (process.env.NODE_ENV !== 'production') console.error("Error fetching active orders count:", error);

@@ -156,6 +156,9 @@ export default function StatusPage() {
         align-items:flex-start;
       }
 
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
       .frame {
         width:100%;
         max-width: 414px;
@@ -515,36 +518,36 @@ export default function StatusPage() {
       }
     `}</style>
 
-      <div className="frame">
-        <main className="body">
-          <div className="div">
-            <div className="sticky top-0 z-50 bg-[#FFFFFF] shadow-sm flex flex-col w-full">
-              <header className="header" style={{ boxShadow: 'none' }}>
-                <button className="button" aria-label="Kembali" onClick={() => router.push('/home')}>
-                  <img src="/assets/kembali.svg" alt="Kembali" />
-                </button>
-                <h1 className="h">
-                  <span className="text-wrapper">
-                    {loading ? "Memuat Status..." : `Status Pesanan Saya`}
-                  </span>
-                </h1>
-              </header>
+      <div className="h-[100dvh] flex flex-col overflow-hidden bg-[#F9FAFB] w-full max-w-[414px] mx-auto relative shadow-md">
+        {/* Header & Sticky Area (Fixed) */}
+        <div className="flex-shrink-0 z-50 bg-[#F9FAFB] shadow-sm flex flex-col w-full">
+          <header className="header" style={{ boxShadow: 'none', background: 'transparent' }}>
+            <button className="button" aria-label="Kembali" onClick={() => router.push('/home')}>
+              <img src="/assets/kembali.svg" alt="Kembali" />
+            </button>
+            <h1 className="h">
+              <span className="text-wrapper">
+                {loading ? "Memuat Status..." : `Status Pesanan Saya`}
+              </span>
+            </h1>
+          </header>
 
-              <nav className="section" aria-label="Filter status pesanan" style={{ boxShadow: 'none' }}>
-                <div className="div-2" role="tablist">
-                  <button className={`tab-btn ${activeTab === 'process' ? 'tab-active' : 'tab-inactive'}`}
-                    onClick={() => setActiveTab('process')}>
-                    Sedang Diproses
-                  </button>
-                  <button className={`tab-btn ${activeTab === 'completed' ? 'tab-active' : 'tab-inactive'}`}
-                    onClick={() => setActiveTab('completed')}>
-                    Selesai
-                  </button>
-                </div>
-              </nav>
+          <nav className="section" aria-label="Filter status pesanan" style={{ boxShadow: 'none', background: 'transparent' }}>
+            <div className="div-2" role="tablist">
+              <button className={`tab-btn ${activeTab === 'process' ? 'tab-active' : 'tab-inactive'}`}
+                onClick={() => setActiveTab('process')}>
+                Sedang Diproses
+              </button>
+              <button className={`tab-btn ${activeTab === 'completed' ? 'tab-active' : 'tab-inactive'}`}
+                onClick={() => setActiveTab('completed')}>
+                Selesai
+              </button>
             </div>
+          </nav>
+        </div>
 
-            <section className="main" role="tabpanel">
+        {/* Scrollable List Area */}
+        <section className="flex-1 overflow-y-auto p-[20px] pb-[40px] no-scrollbar" role="tabpanel">
               {/* LIST */}
               {loading ? (
                 <>
@@ -673,8 +676,6 @@ export default function StatusPage() {
               )}
 
             </section>
-          </div>
-        </main>
       </div>
     </>
   );
