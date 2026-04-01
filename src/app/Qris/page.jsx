@@ -24,6 +24,12 @@ function QrisContent() {
     const [loadingQr, setLoadingQr] = useState(false);
     const [error, setError] = useState(null);
     const [gateway, setGateway] = useState('homemade'); // 'homemade' | 'midtrans'
+    
+    // Midtrans Snap State
+    const [snapToken, setSnapToken] = useState("");
+    const [snapClientKey, setSnapClientKey] = useState("");
+    const [isSnapProduction, setIsSnapProduction] = useState(true);
+
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
@@ -366,9 +372,11 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
-                    if (json.data.gateway === 'midtrans' && json.data.paymentUrl) {
-                        // Midtrans Snap Popup URL
-                        setPaymentUrl(json.data.paymentUrl);
+                    if (json.data.gateway === 'midtrans' && json.data.snapToken) {
+                        // Midtrans Snap Popup Token
+                        setSnapToken(json.data.snapToken);
+                        setSnapClientKey(json.data.clientKey);
+                        setIsSnapProduction(json.data.isProduction);
                         if (json.data.amount) setAmount(json.data.amount);
                     } else if (json.data.qrString) {
                         // Homemade dynamic string
@@ -407,7 +415,50 @@ function QrisContent() {
         setGateway(newGateway);
         setQrValue('');     // trigger refetch
         setQrImageUrl('');  // clear image
+        setSnapToken('');   // clear token
         setError(null);
+    };
+
+    // --- MIDTRANS SNAP SCRIPT INJECTOR ---
+    useEffect(() => {
+        if (gateway === 'midtrans' && snapToken && snapClientKey) {
+            const scriptId = 'midtrans-snap-script';
+            if (!document.getElementById(scriptId)) {
+                const script = document.createElement('script');
+                script.id = scriptId;
+                script.src = isSnapProduction 
+                    ? 'https://app.midtrans.com/snap/snap.js'
+                    : 'https://app.sandbox.midtrans.com/snap/snap.js';
+                script.setAttribute('data-client-key', snapClientKey);
+                script.async = true;
+                document.body.appendChild(script);
+            }
+        }
+    }, [gateway, snapToken, snapClientKey, isSnapProduction]);
+
+    // --- MIDTRANS SNAP TRIGGER ---
+    const handleOpenSnap = (e) => {
+        e.preventDefault();
+        if (window.snap && snapToken) {
+            window.snap.pay(snapToken, {
+                onSuccess: function(result) {
+                    if (process.env.NODE_ENV !== 'production') console.log("Snap success", result);
+                    // Biarkan Webhook / Polling yang meredirect otomatis
+                },
+                onPending: function(result) {
+                    if (process.env.NODE_ENV !== 'production') console.log("Snap pending", result);
+                },
+                onError: function(result) {
+                    if (process.env.NODE_ENV !== 'production') console.error("Snap error", result);
+                    setError("Pembayaran gaga. Silakan refresh atau gunakan Server Lokal.");
+                },
+                onClose: function() {
+                    if (process.env.NODE_ENV !== 'production') console.log("Snap closed");
+                }
+            });
+        } else {
+            setError("Modul Midtrans sedang dimuat, silakan coba beberapa saat lagi.");
+        }
     };
 
     // 3. Polling Backup (Just in case Webhook/Socket is delayed)
@@ -637,16 +688,14 @@ function QrisContent() {
                         <div className="spinner"></div>
                     ) : error ? (
                         <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
-                    ) : gateway === 'midtrans' && paymentUrl ? (
+                    ) : gateway === 'midtrans' && snapToken ? (
                         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                             <p style={{ fontSize: '12px', marginBottom: '20px', color: '#64748B', fontWeight: 500 }}>Selesaikan pembayaran via Midtrans</p>
-                            <a 
-                                href={paymentUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
+                            <button 
+                                onClick={handleOpenSnap}
                                 style={{ 
                                     background: '#3B82F6', color: '#fff', padding: '14px 28px', 
-                                    borderRadius: '16px', textDecoration: 'none', fontWeight: 'bold',
+                                    borderRadius: '16px', border: 'none', cursor: 'pointer', fontWeight: 'bold',
                                     boxShadow: '0 4px 14px rgba(59,130,246,0.35)', fontSize: '0.95rem',
                                     display: 'flex', alignItems: 'center', gap: '8px'
                                 }}
@@ -655,7 +704,7 @@ function QrisContent() {
                                     <path d="M18 8L22 12L18 16"/><path d="M2 12H22"/>
                                 </svg>
                                 Buka Midtrans
-                            </a>
+                            </button>
                         </div>
                     ) : qrImageUrl ? (
                         <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
