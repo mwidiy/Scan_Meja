@@ -89,6 +89,12 @@ export default function HomePixelPerfect() {
     // --- HARDWARE BACK BUTTON & SEARCH LOGIC ---
     useEffect(() => {
         const handlePopState = () => {
+            // Jika user menekan tombol back HP saat modal detail terbuka, tutup modal
+            if (selectedProduct) {
+                setSelectedProduct(null);
+                return;
+            }
+
             // Jika user menekan tombol back HP saat mode search, matikan mode search
             if (isSearchMode) {
                 setIsSearchMode(false);
@@ -104,7 +110,7 @@ export default function HomePixelPerfect() {
         // Tambahkan listener
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
-    }, [isSearchMode]);
+    }, [isSearchMode, selectedProduct]);
 
     const handleSearchFocus = () => {
         if (!isSearchMode) {
@@ -545,7 +551,8 @@ export default function HomePixelPerfect() {
             else copy[id] = target;
             return copy;
         });
-        setSelectedProduct(null);
+        // Trigger back browser agar sinkron
+        window.history.back();
     };
 
     const handleModalManualQty = (val) => {
@@ -895,7 +902,13 @@ export default function HomePixelPerfect() {
                                 <div
                                     key={item.id}
                                     className="menu-card"
-                                    onClick={() => !isHabis && setSelectedProduct({ ...item, selectedQty: qty })}
+                                    onClick={() => {
+                                        if (!isHabis) {
+                                            setSelectedProduct({ ...item, selectedQty: qty });
+                                            // Push state history agar tombol back HP berfungsi untuk menutup modal
+                                            window.history.pushState({ modal: 'detail' }, '', window.location.href);
+                                        }
+                                    }}
                                 >
                                     {/* Image */}
                                     <div className="relative w-full aspect-[4/3.3] rounded-[18px] overflow-hidden mb-[10px] bg-[#E5E7EB]">
@@ -982,7 +995,7 @@ export default function HomePixelPerfect() {
 
                 <ProductDetailModal
                     product={selectedProduct}
-                    onClose={() => setSelectedProduct(null)}
+                    onClose={() => window.history.back()}
                     onChangeSelectedQty={(delta) => handleModalChangeQty(delta)}
                     onManualInput={(val) => handleModalManualQty(val)}
                     onAddToCart={() => handleModalAddToCart()}

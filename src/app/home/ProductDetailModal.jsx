@@ -154,7 +154,7 @@ export default function ProductDetailModal({ product, onClose, onChangeSelectedQ
                                             alert("Mohon isi jumlah pesanan terlebih dahulu!");
                                             return;
                                         }
-                                        onClose();
+                                        if (onAddToCart) onAddToCart();
                                     }}>
                                         Tambah ke Keranjang
                                     </button>
