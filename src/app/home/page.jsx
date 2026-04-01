@@ -86,6 +86,43 @@ export default function HomePixelPerfect() {
     const [isHelpDrawerOpen, setIsHelpDrawerOpen] = useState(false);
     const [whatsappNumber, setWhatsappNumber] = useState(null);
 
+    // TUGAS BARU: Active Orders Count untuk Badge Notifikasi
+    const [activeOrdersCount, setActiveOrdersCount] = useState(0);
+
+    // Fetch active orders untuk update badge
+    useEffect(() => {
+        const fetchOrdersCount = async () => {
+            try {
+                const historyStr = localStorage.getItem('order_history');
+                if (!historyStr) return;
+                const history = JSON.parse(historyStr);
+                if (!Array.isArray(history) || history.length === 0) return;
+
+                const { getOrdersByBatch } = await import('../../services/api');
+                // Ambil 50 order terakhir seperti di status_page
+                const validHistory = history.slice(0, 50).filter(code => typeof code === 'string' && /^[a-zA-Z0-9\-_]+$/.test(code));
+                if (validHistory.length === 0) return;
+
+                const res = await getOrdersByBatch(validHistory);
+                
+                if (res && res.success && Array.isArray(res.data)) {
+                    // Hitung yang sedang diproses (bukan Completed, Ready, atau Cancelled)
+                    const activeCount = res.data.filter(order => 
+                        order.status !== 'Completed' && 
+                        order.status !== 'Ready' && 
+                        order.status !== 'Cancelled'
+                    ).length;
+                    setActiveOrdersCount(activeCount);
+                }
+            } catch (error) {
+                if (process.env.NODE_ENV !== 'production') console.error("Error fetching active orders count:", error);
+            }
+        };
+
+        // Delay sedikit agar tidak memblokir initial loading Home
+        setTimeout(fetchOrdersCount, 1500);
+    }, []);
+
     // --- HARDWARE BACK BUTTON & SEARCH LOGIC ---
     useEffect(() => {
         const handlePopState = () => {
@@ -1044,9 +1081,13 @@ export default function HomePixelPerfect() {
 
                     {/* 3. Tombol Notification / Status */}
                     <div
-                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent"
+                        className="w-[56px] h-[56px] rounded-full bg-[#2D3949] text-white flex justify-center items-center shadow-[0_8px_20px_rgba(15,23,42,0.12)] cursor-pointer hover:-translate-y-1 transition-transform border border-transparent relative"
                         onClick={() => router.push('/status')}
                     >
+                        {/* BADGE NOTIFIKASI */}
+                        <div className={`absolute -top-[6px] -right-[6px] bg-[#EF4444] text-white text-[12px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-2 border-white transition-all duration-300 ${activeOrdersCount > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+                            {activeOrdersCount > 9 ? '9+' : activeOrdersCount}
+                        </div>
                         <img src="/assets/lonceng.svg" alt="Status" className="w-[26px] h-[26px] object-contain" />
                     </div>
                 </div>

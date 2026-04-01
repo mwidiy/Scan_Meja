@@ -518,29 +518,31 @@ export default function StatusPage() {
       <div className="frame">
         <main className="body">
           <div className="div">
-            <header className="header">
-              <button className="button" aria-label="Kembali" onClick={() => router.push('/home')}>
-                <img src="/assets/kembali.svg" alt="Kembali" />
-              </button>
-              <h1 className="h">
-                <span className="text-wrapper">
-                  {loading ? "Memuat Status..." : `Status Pesanan Saya`}
-                </span>
-              </h1>
-            </header>
+            <div className="sticky top-0 z-50 bg-[#FFFFFF] shadow-sm flex flex-col w-full">
+              <header className="header" style={{ boxShadow: 'none' }}>
+                <button className="button" aria-label="Kembali" onClick={() => router.push('/home')}>
+                  <img src="/assets/kembali.svg" alt="Kembali" />
+                </button>
+                <h1 className="h">
+                  <span className="text-wrapper">
+                    {loading ? "Memuat Status..." : `Status Pesanan Saya`}
+                  </span>
+                </h1>
+              </header>
 
-            <nav className="section" aria-label="Filter status pesanan">
-              <div className="div-2" role="tablist">
-                <button className={`tab-btn ${activeTab === 'process' ? 'tab-active' : 'tab-inactive'}`}
-                  onClick={() => setActiveTab('process')}>
-                  Sedang Diproses
-                </button>
-                <button className={`tab-btn ${activeTab === 'completed' ? 'tab-active' : 'tab-inactive'}`}
-                  onClick={() => setActiveTab('completed')}>
-                  Selesai
-                </button>
-              </div>
-            </nav>
+              <nav className="section" aria-label="Filter status pesanan" style={{ boxShadow: 'none' }}>
+                <div className="div-2" role="tablist">
+                  <button className={`tab-btn ${activeTab === 'process' ? 'tab-active' : 'tab-inactive'}`}
+                    onClick={() => setActiveTab('process')}>
+                    Sedang Diproses
+                  </button>
+                  <button className={`tab-btn ${activeTab === 'completed' ? 'tab-active' : 'tab-inactive'}`}
+                    onClick={() => setActiveTab('completed')}>
+                    Selesai
+                  </button>
+                </div>
+              </nav>
+            </div>
 
             <section className="main" role="tabpanel">
               {/* LIST */}
