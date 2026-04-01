@@ -419,47 +419,49 @@ function QrisContent() {
         setError(null);
     };
 
-    // --- MIDTRANS SNAP SCRIPT INJECTOR ---
+    // --- MIDTRANS SNAP SCRIPT INJECTOR & AUTO EMBED ---
     useEffect(() => {
         if (gateway === 'midtrans' && snapToken && snapClientKey) {
             const scriptId = 'midtrans-snap-script';
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
+            let script = document.getElementById(scriptId);
+
+            const triggerEmbed = () => {
+                if (window.snap) {
+                    window.snap.embed(snapToken, {
+                        embedId: 'snap-container',
+                        onSuccess: function(result) {
+                            if (process.env.NODE_ENV !== 'production') console.log("Snap success", result);
+                            // Webhook / Polling will redirect
+                        },
+                        onPending: function(result) {
+                            if (process.env.NODE_ENV !== 'production') console.log("Snap pending", result);
+                        },
+                        onError: function(result) {
+                            if (process.env.NODE_ENV !== 'production') console.error("Snap error", result);
+                            setError("Pembayaran Midtrans gagal atau kadaluarsa. Silakan refresh.");
+                        }
+                    });
+                }
+            };
+
+            if (!script) {
+                script = document.createElement('script');
                 script.id = scriptId;
                 script.src = isSnapProduction 
                     ? 'https://app.midtrans.com/snap/snap.js'
                     : 'https://app.sandbox.midtrans.com/snap/snap.js';
                 script.setAttribute('data-client-key', snapClientKey);
                 script.async = true;
+                script.onload = () => {
+                    triggerEmbed();
+                };
                 document.body.appendChild(script);
+            } else {
+                // Script was already loaded in a previous render
+                triggerEmbed();
             }
         }
     }, [gateway, snapToken, snapClientKey, isSnapProduction]);
-
-    // --- MIDTRANS SNAP TRIGGER ---
-    const handleOpenSnap = (e) => {
-        e.preventDefault();
-        if (window.snap && snapToken) {
-            window.snap.pay(snapToken, {
-                onSuccess: function(result) {
-                    if (process.env.NODE_ENV !== 'production') console.log("Snap success", result);
-                    // Biarkan Webhook / Polling yang meredirect otomatis
-                },
-                onPending: function(result) {
-                    if (process.env.NODE_ENV !== 'production') console.log("Snap pending", result);
-                },
-                onError: function(result) {
-                    if (process.env.NODE_ENV !== 'production') console.error("Snap error", result);
-                    setError("Pembayaran gaga. Silakan refresh atau gunakan Server Lokal.");
-                },
-                onClose: function() {
-                    if (process.env.NODE_ENV !== 'production') console.log("Snap closed");
-                }
-            });
-        } else {
-            setError("Modul Midtrans sedang dimuat, silakan coba beberapa saat lagi.");
-        }
-    };
 
     // 3. Polling Backup (Just in case Webhook/Socket is delayed)
     useEffect(() => {
@@ -683,62 +685,56 @@ function QrisContent() {
                     </button>
                 </div>
 
-                <div className="qr-box">
-                    {loadingQr ? (
-                        <div className="spinner"></div>
-                    ) : error ? (
-                        <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
-                    ) : gateway === 'midtrans' && snapToken ? (
-                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                            <p style={{ fontSize: '12px', marginBottom: '20px', color: '#64748B', fontWeight: 500 }}>Selesaikan pembayaran via Midtrans</p>
-                            <button 
-                                onClick={handleOpenSnap}
-                                style={{ 
-                                    background: '#3B82F6', color: '#fff', padding: '14px 28px', 
-                                    borderRadius: '16px', border: 'none', cursor: 'pointer', fontWeight: 'bold',
-                                    boxShadow: '0 4px 14px rgba(59,130,246,0.35)', fontSize: '0.95rem',
-                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                }}
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M18 8L22 12L18 16"/><path d="M2 12H22"/>
+                {gateway === 'midtrans' ? (
+                    // MIDTRANS EMBED AREA
+                    <div style={{ width: '100%', minHeight: '300px', margin: '0 0 24px 0', border: 'none' }}>
+                        {loadingQr && <div className="spinner" style={{ margin: '40px auto' }}></div>}
+                        {error && <div style={{ color: 'red', fontSize: '13px', padding: '10px', textAlign: 'center' }}>{error}</div>}
+                        <div id="snap-container" key={`snap-${snapToken}`}></div>
+                    </div>
+                ) : (
+                    // HOMEMADE QR AREA
+                    <>
+                        <div className="qr-box">
+                            {loadingQr ? (
+                                <div className="spinner"></div>
+                            ) : error ? (
+                                <div style={{ color: 'red', fontSize: '13px', padding: '10px' }}>{error}</div>
+                            ) : qrImageUrl ? (
+                                <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
+                                    <img 
+                                        src={qrImageUrl} 
+                                        alt="QRIS Code" 
+                                        style={{ height: "auto", maxWidth: "100%", width: "220px", display: 'block' }}
+                                    />
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <img src="/assets/Qris_Logo.svg" alt="QRIS" style={{ height: '28px', marginBottom: '20px', opacity: 0.8 }} />
+
+                        <p style={{ fontSize: '0.85rem', color: '#64748B', lineHeight: '1.6' }}>
+                            Scan QR ini dengan GoPay, OVO, Dana, ShopeePay atau Mobile Banking Anda.
+                        </p>
+
+                        <div className="wallets">
+                            <div className="wallet-icon"><img src="/assets/gopay.png" alt="GoPay" /></div>
+                            <div className="wallet-icon"><img src="/assets/ovo.png" alt="OVO" /></div>
+                            <div className="wallet-icon"><img src="/assets/dana.png" alt="Dana" /></div>
+                            <div className="wallet-icon"><img src="/assets/shoppe.png" alt="ShopeePay" /></div>
+                        </div>
+
+                        {qrImageUrl && !loadingQr && !error && (
+                            <button className="btn-download-qr" onClick={handleDownloadQr} id="btn-download-qr" style={{ marginTop: '24px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
                                 </svg>
-                                Buka Midtrans
+                                Simpan QR
                             </button>
-                        </div>
-                    ) : qrImageUrl ? (
-                        <div style={{ padding: '12px', background: 'white', borderRadius: '16px', display: 'flex', justifyContent: 'center' }}>
-                            <img 
-                                src={qrImageUrl} 
-                                alt="QRIS Code" 
-                                style={{ height: "auto", maxWidth: "100%", width: "220px", display: 'block' }}
-                            />
-                        </div>
-                    ) : null}
-                </div>
-
-                <img src="/assets/Qris_Logo.svg" alt="QRIS" style={{ height: '28px', marginBottom: '20px', opacity: 0.8 }} />
-
-                <p style={{ fontSize: '0.85rem', color: '#64748B', lineHeight: '1.6' }}>
-                    Scan QR ini dengan GoPay, OVO, Dana, ShopeePay atau Mobile Banking Anda.
-                </p>
-
-                <div className="wallets">
-                    <div className="wallet-icon"><img src="/assets/gopay.png" alt="GoPay" /></div>
-                    <div className="wallet-icon"><img src="/assets/ovo.png" alt="OVO" /></div>
-                    <div className="wallet-icon"><img src="/assets/dana.png" alt="Dana" /></div>
-                    <div className="wallet-icon"><img src="/assets/shoppe.png" alt="ShopeePay" /></div>
-                </div>
-
-                {qrImageUrl && !loadingQr && !error && (
-                    <button className="btn-download-qr" onClick={handleDownloadQr} id="btn-download-qr" style={{ marginTop: '24px' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        Simpan QR
-                    </button>
+                        )}
+                    </>
                 )}
             </div>
 
