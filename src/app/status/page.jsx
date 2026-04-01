@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { getImageUrl, getOrdersByBatch } from '../../services/api';
 
@@ -8,22 +8,25 @@ export default function StatusPage() {
   const [activeTab, setActiveTab] = useState('process'); // process | completed
   const [orders, setOrders] = useState({ process: [], completed: [] });
   const [loading, setLoading] = useState(true);
+  const [, startTransition] = useTransition(); // PERF: Smooth background revalidation
 
   useEffect(() => {
-    // TAHAP 56: STALE-WHILE-REVALIDATE CACHE (0ms Rent time display)
+    // PERF: SWR Pattern — Render cached data INSTANTLY (0ms), then revalidate in background
+    let hasCachedData = false;
     try {
       const cachedStr = localStorage.getItem('cached_status_orders');
       if (cachedStr) {
         const cachedOrders = JSON.parse(cachedStr);
         setOrders(cachedOrders);
-        setLoading(false); // Render Instan
+        setLoading(false); // Render Instan — NO skeleton flicker
+        hasCachedData = true;
       }
     } catch (e) { }
 
-    fetchOrders();
+    fetchOrders(hasCachedData);
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (hasCachedData = false) => {
     try {
       // 1. Get transaction codes from localStorage
       let history = [];
@@ -38,7 +41,7 @@ export default function StatusPage() {
       }
 
       if (history.length === 0) {
-        setLoading(false);
+        if (!hasCachedData) setLoading(false);
         return;
       }
 
@@ -47,13 +50,11 @@ export default function StatusPage() {
 
       if (json.success) {
         // TAHAP 50: Re-indexing historical order based on creation time
-        // 1. Sort all orders chronologically (oldest first) to give them a true "History Number"
         const sortedAll = [...json.data].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-        // 2. Map and attach their true index (1, 2, 3...)
         const mappedData = sortedAll.map((order, index) => ({
           ...order,
-          historicalIndex: index + 1 // "Pesanan #1", "Pesanan #2"
+          historicalIndex: index + 1
         }));
 
         let processList = [];
@@ -69,29 +70,30 @@ export default function StatusPage() {
         });
 
         // TAHAP 50: Special Sorting
-        // "Sedang Diproses" -> First In First Out (Oldest on top) -> Sort ASC
         processList.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-        // "Selesai" -> Last In First Out (Newest on top) -> Sort DESC
         completedList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        setOrders({
-          process: processList,
-          completed: completedList
-        });
+        const freshData = { process: processList, completed: completedList };
 
-        // TAHAP 56: Simpan memori terbaru ke HP Pelanggan
+        // PERF: SWR — If cache was shown, update state in background transition (no flicker)
+        if (hasCachedData) {
+          startTransition(() => {
+            setOrders(freshData);
+          });
+        } else {
+          setOrders(freshData);
+        }
+
+        // Update cache for next visit
         try {
-          localStorage.setItem('cached_status_orders', JSON.stringify({
-            process: processList,
-            completed: completedList
-          }));
+          localStorage.setItem('cached_status_orders', JSON.stringify(freshData));
         } catch (e) { }
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') console.error("Error fetching status:", error);
     } finally {
-      setLoading(false);
+      // Only flip loading off on cold start (hasCachedData already set it to false)
+      if (!hasCachedData) setLoading(false);
     }
 
     // TAHAP 54: Prefetching Route (Instant Navigation)

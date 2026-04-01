@@ -33,6 +33,7 @@ function QrisContent() {
     const [isPaid, setIsPaid] = useState(false);
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
+    const socketRef = useRef(null); // PERF: Track socket connection state for smart polling
     const [serverExpiry, setServerExpiry] = useState(() => Date.now() + 900000); // 15 min default, overridden below
 
     // --- REFS FOR CALLBACKS (Prevents useEffect loops) ---
@@ -274,6 +275,7 @@ function QrisContent() {
             timeout: 20000,
             forceNew: true,
         });
+        socketRef.current = socket; // PERF: Store ref for smart polling
 
         socket.on('connect', () => {
             if (process.env.NODE_ENV !== 'production') console.log("Socket connected:", socket.id);
@@ -308,6 +310,7 @@ function QrisContent() {
 
         return () => {
             clearInterval(interval);
+            socketRef.current = null;
             socket.disconnect();
         };
     }, [orderId, router]); // Reacts when orderId is fully generated
@@ -455,7 +458,7 @@ function QrisContent() {
         }
     }, [gateway, snapToken, snapClientKey, isSnapProduction]);
 
-    // 3. Polling Backup (Just in case Webhook/Socket is delayed)
+    // 3. Polling Backup (SMART: Only when Socket.IO disconnected, or at relaxed 8s interval)
     useEffect(() => {
         if (!orderId || isPaid || !amount || isExpired) return;
 
@@ -463,9 +466,12 @@ function QrisContent() {
             // TAHAP 53: Throttling Polling in Background Tab
             if (document.hidden) return; // Do not poll if user is looking at WhatsApp/TikTok
 
+            // PERF: Skip polling if socket is alive and connected (webhook will handle it)
+            if (socketRef.current && socketRef.current.connected) return;
+
             try {
                 const API_URL = getDynamicUrl();
-                const res = await fetch(`${API_URL}/api/payment/check-status/${orderId}?amount=${amount}`);
+                const res = await fetch(`${API_URL}/api/payment/check-status/${orderId}`);
                 const json = await res.json();
 
                 if (json.status === 'Paid') {
@@ -476,7 +482,7 @@ function QrisContent() {
             }
         };
 
-        let poll = setInterval(checkStatus, 5000);
+        let poll = setInterval(checkStatus, 8000); // PERF: 8s instead of 5s
         return () => clearInterval(poll);
     }, [orderId, isPaid, amount, isExpired]); // REMOVE handleSuccess
 
