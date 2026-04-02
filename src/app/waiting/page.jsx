@@ -110,27 +110,24 @@ export default function TrackingPage() {
                 // Status Text Logic
                 // FIX 46: PWA QRIS Waiting Payment Guard
                 if (order.status === 'WaitingPayment') {
-                    setOrdersAhead("Menunggu Pembayaran QRIS");
+                    setOrdersAhead(null);
                     setEstimatedTime(null);
                 } else if (order.status === 'Pending') {
-                    // TAHAP 49: NEW QUEUE PHILOSOPHY (Active Pending Count)
-                    // Jika queuePosition 1, berarti dia adalah satu-satunya orang di antrean, sisa di depan adalah 0.
                     const peopleAhead = order.queuePosition && order.queuePosition > 0 ? order.queuePosition - 1 : 0;
-                    const pos = peopleAhead === 0 ? `Giliran Anda Selanjutnya!` : `Sisa ${peopleAhead} Antrean di Depan Anda`;
-                    setOrdersAhead(pos);
+                    setOrdersAhead(peopleAhead);
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
                     }
                 } else if (order.status === 'Processing') {
-                    setOrdersAhead("Sedang Disiapkan");
+                    setOrdersAhead(0); // My turn
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
                     }
                 } else if (order.status === 'Cancelled') {
-                    setOrdersAhead("Pesanan Dibatalkan");
+                    setOrdersAhead(null);
                     setEstimatedTime(null);
                 } else {
-                    setOrdersAhead("Pesanan Selesai");
+                    setOrdersAhead(null);
                     setEstimatedTime(null);
                 }
 
@@ -138,10 +135,7 @@ export default function TrackingPage() {
                 if (order.store && order.store.whatsappNumber) {
                     // Security: Validate WhatsApp number format
                     const wa = String(order.store.whatsappNumber).replace(/\D/g, '');
-                    if (wa.length >= 8 && wa.length <= 15) {
-                        setWhatsappNumber(wa);
-                        localStorage.setItem('store_wa', wa);
-                    }
+                    if (wa.length >= 8 && wa.length <= 15) setWhatsappNumber(wa);
                 }
                 if (order.store && order.store.isKasirQrVerificationEnabled !== undefined) {
                     setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
@@ -222,14 +216,13 @@ export default function TrackingPage() {
                     setTimeout(() => setOrderStatus(mappedStatus), 0);
 
                     setTimeout(() => {
-                        if (parsed.status === 'WaitingPayment') setOrdersAhead("Menunggu Pembayaran QRIS");
+                        if (parsed.status === 'WaitingPayment') setOrdersAhead(null);
                         else if (parsed.status === 'Pending') {
                             const peopleAhead = parsed.queuePosition && parsed.queuePosition > 0 ? parsed.queuePosition - 1 : 0;
-                            setOrdersAhead(peopleAhead === 0 ? `Giliran Anda Selanjutnya!` : `Sisa ${peopleAhead} Antrean di Depan Anda`);
+                            setOrdersAhead(peopleAhead);
                         }
-                        else if (parsed.status === 'Processing') setOrdersAhead("Sedang Disiapkan");
-                        else if (parsed.status === 'Cancelled') setOrdersAhead("Pesanan Dibatalkan");
-                        else setOrdersAhead("Pesanan Selesai");
+                        else if (parsed.status === 'Processing') setOrdersAhead(0);
+                        else setOrdersAhead(null);
                     }, 0);
                 }
                 if (parsed.paymentStatus) {
@@ -334,7 +327,12 @@ export default function TrackingPage() {
             return;
         }
 
-        const message = `Halo Kak, saya *${customerName}* dengan Order ID *${transactionCode}*.\n\nStatus pesanan saya sekarang: *${ordersAhead}*. \nMohon informasinya ya, terima kasih! 🙏`;
+        const statusMsg = orderStatus === 'ready' ? 'Siap Diantar' : 
+                          orderStatus === 'preparing' ? 'Sedang Disiapkan' : 
+                          orderStatus === 'cancelled' ? 'Dibatalkan' : 
+                          (ordersAhead > 0 ? `Antrean ke-${ordersAhead}` : 'Giliran Saya');
+
+        const message = `Halo Kak, saya *${customerName}* dengan Order ID *${transactionCode}*.\n\nStatus pesanan saya sekarang: *${statusMsg}*. \nMohon informasinya ya, terima kasih! 🙏`;
         // Ensure number format is correct (strip +, ensure 62)
         // Check if starts with 0, replace with 62
         let target = whatsappNumber.replace(/\D/g, '');
@@ -897,18 +895,30 @@ export default function TrackingPage() {
                                                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{ display: 'block' }}><polyline points="20 6 9 17 4 12" /></svg>
                                             ) : orderStatus === 'cancelled' ? (
                                                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" style={{ display: 'block' }}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                            ) : orderStatus === 'preparing' ? (
-                                                <motion.svg
-                                                    width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" style={{ display: 'block' }}
-                                                    animate={{ scale: [1, 1.15, 1] }}
-                                                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                                                >
-                                                    <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" /><line x1="6" y1="17" x2="18" y2="17" />
-                                                </motion.svg>
                                             ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                    <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280', marginBottom: -4 }}>NO. PESANAN</span>
-                                                    <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1, display: 'block' }}>{(!queueNumber || queueNumber === '0' || queueNumber === 0) ? '-' : queueNumber}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 12px' }}>
+                                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', marginBottom: 4, letterSpacing: '0.05em', lineHeight: 1.2 }}>
+                                                        SISA ANTREAN DI DEPAN ANDA
+                                                    </span>
+                                                    {(ordersAhead > 0 && ordersAhead !== null) ? (
+                                                        <span style={{ fontSize: 64, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1 }}>
+                                                            {ordersAhead}
+                                                        </span>
+                                                    ) : (
+                                                        (orderStatus === 'preparing' || orderStatus === 'received') ? (
+                                                            <motion.span
+                                                                animate={{ scale: [1, 1.05, 1], opacity: [1, 0.7, 1] }}
+                                                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                                                style={{ fontSize: 24, fontWeight: 800, color: '#10B981', lineHeight: 1.2 }}
+                                                            >
+                                                                Giliran Anda!
+                                                            </motion.span>
+                                                        ) : (
+                                                            <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', lineHeight: 1 }}>
+                                                                -
+                                                            </span>
+                                                        )
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -921,11 +931,6 @@ export default function TrackingPage() {
                                             orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
                                                 "Pesanan Diterima"}
                                 </h2>
-                                {ordersAhead && orderStatus !== 'ready' && orderStatus !== 'cancelled' && (
-                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#D97706', marginTop: 4 }}>
-                                        {ordersAhead}
-                                    </div>
-                                )}
 
                                 {estimatedTime && orderStatus !== 'cancelled' && orderStatus !== 'ready' && (
                                     <div style={{ marginTop: 12, padding: '8px 20px', background: '#F3F4F6', borderRadius: 99, fontSize: 15, fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: 8 }}>
