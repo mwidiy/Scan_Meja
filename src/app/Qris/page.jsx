@@ -455,6 +455,23 @@ function QrisContent() {
                 // Script was already loaded in a previous render
                 triggerEmbed();
             }
+
+            // --- CLEANUP ON UNMOUNT ---
+            return () => {
+                const snapContainer = document.getElementById('snap-container');
+                if (snapContainer) snapContainer.innerHTML = '';
+                
+                const script = document.getElementById(scriptId);
+                if (script) script.remove();
+                
+                if (window.snap) {
+                    delete window.snap;
+                }
+
+                // Cleanup any leftovers (zombie elements)
+                document.querySelectorAll('iframe[src*="midtrans"]').forEach(el => el.remove());
+                document.querySelectorAll('.snap-overlay').forEach(el => el.remove());
+            };
         }
     }, [gateway, snapToken, snapClientKey, isSnapProduction]);
 
