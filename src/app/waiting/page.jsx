@@ -138,7 +138,10 @@ export default function TrackingPage() {
                 if (order.store && order.store.whatsappNumber) {
                     // Security: Validate WhatsApp number format
                     const wa = String(order.store.whatsappNumber).replace(/\D/g, '');
-                    if (wa.length >= 8 && wa.length <= 15) setWhatsappNumber(wa);
+                    if (wa.length >= 8 && wa.length <= 15) {
+                        setWhatsappNumber(wa);
+                        localStorage.setItem('store_wa', wa);
+                    }
                 }
                 if (order.store && order.store.isKasirQrVerificationEnabled !== undefined) {
                     setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
@@ -918,6 +921,11 @@ export default function TrackingPage() {
                                             orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
                                                 "Pesanan Diterima"}
                                 </h2>
+                                {ordersAhead && orderStatus !== 'ready' && orderStatus !== 'cancelled' && (
+                                    <div style={{ fontSize: 16, fontWeight: 700, color: '#D97706', marginTop: 4 }}>
+                                        {ordersAhead}
+                                    </div>
+                                )}
 
                                 {estimatedTime && orderStatus !== 'cancelled' && orderStatus !== 'ready' && (
                                     <div style={{ marginTop: 12, padding: '8px 20px', background: '#F3F4F6', borderRadius: 99, fontSize: 15, fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: 8 }}>
