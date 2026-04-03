@@ -158,7 +158,10 @@ function QrisContent() {
                             id: response.data.transactionCode,
                             numericId: response.data.id,
                             amount: parsedPayload.totalAmount,
-                            expiryTime: newExpiry
+                            expiryTime: newExpiry,
+                            snapToken: response.data.snapToken || "",
+                            snapClientKey: response.data.clientKey || "",
+                            gateway: response.data.gateway || "homemade"
                         }));
                     } catch (err) {
                         if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
@@ -207,7 +210,10 @@ function QrisContent() {
                     id: idParam,
                     numericId: numId,
                     amount: amtParam,
-                    expiryTime: existingExpiry
+                    expiryTime: existingExpiry,
+                    snapToken: snapToken,        // Added for persistence
+                    snapClientKey: snapClientKey, // Added for persistence
+                    gateway: gateway              // Added for persistence
                 }));
             }
 
@@ -220,6 +226,11 @@ function QrisContent() {
                     if (!amtParam) amtParam = b.amount;
                     if (!numId) numId = b.numericId;
                     if (b.expiryTime) setServerExpiry(b.expiryTime);
+
+                    // RESTORE MIDTRANS STATE FROM BACKUP
+                    if (b.snapToken) setSnapToken(b.snapToken);
+                    if (b.snapClientKey) setSnapClientKey(b.snapClientKey);
+                    if (b.gateway) setGateway(b.gateway);
                 }
             }
 
@@ -348,7 +359,7 @@ function QrisContent() {
     // 2. Fetch QR Code Trigger
     useEffect(() => {
         if (!orderId || !amount) return;
-        if (qrValue) return; // Already loaded
+        if (qrValue || snapToken) return; // Prevent double fetch if already loaded or persistent from backup
 
         const fetchQr = async () => {
             try {
@@ -374,29 +385,44 @@ function QrisContent() {
 
                 // 2. Normal QR Flow
                 if (json.success && json.data) {
-                    if (json.data.gateway) setGateway(json.data.gateway);
+                    const { gateway: newGateway, snapToken: newToken, clientKey: newKey, isProduction, amount: newAmount, qrString, paymentUrl: newUrl } = json.data;
 
-                    if (json.data.gateway === 'midtrans' && json.data.snapToken) {
+                    if (newGateway) setGateway(newGateway);
+
+                    if (newGateway === 'midtrans' && newToken) {
                         // Midtrans Snap Popup Token
-                        setSnapToken(json.data.snapToken);
-                        setSnapClientKey(json.data.clientKey);
-                        setIsSnapProduction(json.data.isProduction);
-                        if (json.data.amount) setAmount(json.data.amount);
-                    } else if (json.data.qrString) {
+                        setSnapToken(newToken);
+                        setSnapClientKey(newKey);
+                        setIsSnapProduction(isProduction);
+                        if (newAmount) setAmount(newAmount);
+                    } else if (qrString) {
                         // Homemade dynamic string
-                        setQrValue(json.data.qrString);
+                        setQrValue(qrString);
                         // Update amount if backend says so (e.g. fees)
-                        if (json.data.amount) setAmount(json.data.amount);
-                    } else if (json.data.paymentUrl) {
+                        if (newAmount) setAmount(newAmount);
+                    } else if (newUrl) {
                         // Security: Open Redirect Protection (Fallback)
-                        const url = json.data.paymentUrl;
-                        const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(url);
+                        const IS_SAFE_DOMAIN = /^https:\/\/(app\.pakasir\.com|.*\.midtrans\.com|.*\.duitku\.com|.*\.xendit\.co|.*\.doku\.com)\//i.test(newUrl);
 
-                        if (url && IS_SAFE_DOMAIN) {
-                            setPaymentUrl(url);
+                        if (IS_SAFE_DOMAIN) {
+                            setPaymentUrl(newUrl);
                         } else {
                             setError("Link pembayaran tidak valid / tidak aman.");
                         }
+                    }
+
+                    // UPDATE BACKUP WITH NEW PAYMENT DATA
+                    const existing = localStorage.getItem('qris_backup');
+                    if (existing) {
+                        try {
+                            const b = JSON.parse(existing);
+                            localStorage.setItem('qris_backup', JSON.stringify({
+                                ...b,
+                                snapToken: newToken || b.snapToken || "",
+                                snapClientKey: newKey || b.snapClientKey || "",
+                                gateway: newGateway || b.gateway || "homemade"
+                            }));
+                        } catch(e) {}
                     }
                 } else {
                     throw new Error(json.message || "Gagal memuat pembayaran");
@@ -458,19 +484,12 @@ function QrisContent() {
 
             // --- CLEANUP ON UNMOUNT ---
             return () => {
+                // PROFESSIONAL CLEANUP: 
+                // Only clear the container's innerHTML to prevent UI artifacts.
+                // We keep window.snap and the script tag in memory so that if the user 
+                // comes back (Back button), it loads instantly without re-downloading Snap assets.
                 const snapContainer = document.getElementById('snap-container');
                 if (snapContainer) snapContainer.innerHTML = '';
-                
-                const script = document.getElementById(scriptId);
-                if (script) script.remove();
-                
-                if (window.snap) {
-                    delete window.snap;
-                }
-
-                // Cleanup any leftovers (zombie elements)
-                document.querySelectorAll('iframe[src*="midtrans"]').forEach(el => el.remove());
-                document.querySelectorAll('.snap-overlay').forEach(el => el.remove());
             };
         }
     }, [gateway, snapToken, snapClientKey, isSnapProduction]);
