@@ -34,6 +34,7 @@ function QrisContent() {
     const [isExpired, setIsExpired] = useState(false); // NEW STATE
     const successLockRef = useRef(false); // Security: Lock for handleSuccess
     const socketRef = useRef(null); // PERF: Track socket connection state for smart polling
+    const snapRendered = useRef(false); // NEW: Prevent double embed on remount / double-render
     const [serverExpiry, setServerExpiry] = useState(() => Date.now() + 900000); // 15 min default, overridden below
 
     // --- REFS FOR CALLBACKS (Prevents useEffect loops) ---
@@ -444,15 +445,18 @@ function QrisContent() {
     useEffect(() => {
         if (gateway === 'midtrans' && snapToken && snapClientKey) {
             const scriptId = 'midtrans-snap-script';
-            let script = document.getElementById(scriptId);
 
             const triggerEmbed = () => {
+                // Ensure DOM is ready and we haven't rendered yet
+                if (!document.getElementById('snap-container')) return;
+                if (snapRendered.current) return;
+
                 if (window.snap) {
+                    snapRendered.current = true;
                     window.snap.embed(snapToken, {
                         embedId: 'snap-container',
                         onSuccess: function(result) {
                             if (process.env.NODE_ENV !== 'production') console.log("Snap success", result);
-                            // Webhook / Polling will redirect
                         },
                         onPending: function(result) {
                             if (process.env.NODE_ENV !== 'production') console.log("Snap pending", result);
@@ -465,31 +469,45 @@ function QrisContent() {
                 }
             };
 
-            if (!script) {
-                script = document.createElement('script');
-                script.id = scriptId;
-                script.src = isSnapProduction 
-                    ? 'https://app.midtrans.com/snap/snap.js'
-                    : 'https://app.sandbox.midtrans.com/snap/snap.js';
-                script.setAttribute('data-client-key', snapClientKey);
-                script.async = true;
-                script.onload = () => {
-                    triggerEmbed();
-                };
-                document.body.appendChild(script);
-            } else {
-                // Script was already loaded in a previous render
-                triggerEmbed();
-            }
+            // Force Re-injection: Remove old script if exists to avoid 'Invalid state transition'
+            const oldScript = document.getElementById(scriptId);
+            if (oldScript) oldScript.remove();
 
-            // --- CLEANUP ON UNMOUNT ---
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = isSnapProduction 
+                ? 'https://app.midtrans.com/snap/snap.js'
+                : 'https://app.sandbox.midtrans.com/snap/snap.js';
+            script.setAttribute('data-client-key', snapClientKey);
+            script.async = true;
+            script.onload = () => {
+                triggerEmbed();
+            };
+            document.body.appendChild(script);
+
+            // --- TOTAL ANNIHILATION CLEANUP ON UNMOUNT ---
             return () => {
-                // PROFESSIONAL CLEANUP: 
-                // Only clear the container's innerHTML to prevent UI artifacts.
-                // We keep window.snap and the script tag in memory so that if the user 
-                // comes back (Back button), it loads instantly without re-downloading Snap assets.
+                snapRendered.current = false;
+                
+                // 1. Kill Midtrans functions if active
+                if (window.snap) {
+                    try { window.snap.hide(); } catch(e) {}
+                    window.snap = undefined; // Force delete from global memory
+                }
+
+                // 2. Clear container
                 const snapContainer = document.getElementById('snap-container');
                 if (snapContainer) snapContainer.innerHTML = '';
+                
+                // 3. Remove Script
+                const scriptToRemove = document.getElementById(scriptId);
+                if (scriptToRemove) scriptToRemove.remove();
+                
+                // 4. DESTROY ALL ZOMBIE IFRAMES & OVERLAYS
+                document.querySelectorAll('iframe').forEach(el => {
+                    if (el.src && el.src.includes('midtrans')) el.remove();
+                });
+                document.querySelectorAll('.snap-overlay, #snap-midtrans').forEach(el => el.remove());
             };
         }
     }, [gateway, snapToken, snapClientKey, isSnapProduction]);
