@@ -175,7 +175,9 @@ function QrisContent() {
                             snapClientKey: ck,
                             gateway: gw
                         }));
+                        setLoadingQr(false);
                     } catch (err) {
+                        setLoadingQr(false);
                         if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
                         alert("Pembuatan pesanan gagal. Silakan kembali dan coba lagi (Error: " + (err.message || 'Server sibuk') + ").");
                         sessionStorage.removeItem('pending_order_payload'); // Clear to prevent loops
