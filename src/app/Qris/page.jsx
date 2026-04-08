@@ -152,6 +152,17 @@ function QrisContent() {
                         numericIdRef.current = response.data.id;
                         idParam = response.data.transactionCode;
 
+                        // FIX: Extract token from paymentData (not top-level)
+                        const pd = response.data.paymentData || {};
+                        const tkn = pd.snapToken || "";
+                        const ck  = pd.clientKey  || "";
+                        const gw  = pd.gateway    || "homemade";
+
+                        // Set state so Snap can render without a second fetch
+                        if (tkn) setSnapToken(tkn);
+                        if (ck)  setSnapClientKey(ck);
+                        if (gw)  setGateway(gw);
+
                         // Backup
                         const newExpiry = Date.now() + 900000;
                         setServerExpiry(newExpiry);
@@ -160,9 +171,9 @@ function QrisContent() {
                             numericId: response.data.id,
                             amount: parsedPayload.totalAmount,
                             expiryTime: newExpiry,
-                            snapToken: response.data.snapToken || "",
-                            snapClientKey: response.data.clientKey || "",
-                            gateway: response.data.gateway || "homemade"
+                            snapToken: tkn,
+                            snapClientKey: ck,
+                            gateway: gw
                         }));
                     } catch (err) {
                         if (process.env.NODE_ENV !== 'production') console.error("Background Order Failed:", err);
@@ -194,27 +205,40 @@ function QrisContent() {
                 amtParam = Math.max(0, Math.min(rawAmt || 0, 99999999));
 
                 // NEW: Backup for refresh resilience (Store both IDs and persist Timer)
+                // FIX: Read existing backup FIRST to preserve tokens that are already saved
                 const existingBackupStr = localStorage.getItem('qris_backup');
                 let existingExpiry = Date.now() + 900000;
+                let preservedToken = "";
+                let preservedClientKey = "";
+                let preservedGateway = "homemade";
+
                 if (existingBackupStr) {
                     try {
                         const parsedBkp = JSON.parse(existingBackupStr);
-                        // Make sure we carry over the old timer if the ID matches
-                        if (parsedBkp.expiryTime && parsedBkp.id === idParam) {
-                            existingExpiry = parsedBkp.expiryTime; 
+                        // Carry over old data if the transaction ID matches
+                        if (parsedBkp.id === idParam) {
+                            if (parsedBkp.expiryTime) existingExpiry = parsedBkp.expiryTime;
+                            if (parsedBkp.snapToken)    preservedToken     = parsedBkp.snapToken;
+                            if (parsedBkp.snapClientKey) preservedClientKey = parsedBkp.snapClientKey;
+                            if (parsedBkp.gateway)      preservedGateway   = parsedBkp.gateway;
                         }
                     } catch(e) {}
                 }
                 setServerExpiry(existingExpiry);
+
+                // Restore Midtrans state from preserved backup (prevents empty-string overwrite)
+                if (preservedToken)     setSnapToken(preservedToken);
+                if (preservedClientKey) setSnapClientKey(preservedClientKey);
+                if (preservedGateway !== 'homemade') setGateway(preservedGateway);
 
                 localStorage.setItem('qris_backup', JSON.stringify({
                     id: idParam,
                     numericId: numId,
                     amount: amtParam,
                     expiryTime: existingExpiry,
-                    snapToken: snapToken,        // Added for persistence
-                    snapClientKey: snapClientKey, // Added for persistence
-                    gateway: gateway              // Added for persistence
+                    snapToken: preservedToken,       // Preserved from old backup, not empty state
+                    snapClientKey: preservedClientKey, // Preserved from old backup, not empty state
+                    gateway: preservedGateway          // Preserved from old backup, not empty state
                 }));
             }
 
@@ -439,7 +463,7 @@ function QrisContent() {
         };
 
         fetchQr();
-    }, [orderId, amount, qrValue]); // Fetch completely driven by backend config (no gateway dependency)
+    }, [orderId, amount, qrValue, snapToken]); // FIX: Added snapToken so the guard `if (qrValue || snapToken) return;` blocks fetch after restore
 
     // --- MIDTRANS SNAP SCRIPT INJECTOR & AUTO EMBED ---
     useEffect(() => {
