@@ -767,8 +767,8 @@ export default function HomePixelPerfect() {
 
                 {/* HEADER */}
                 <header className={`header transition-all duration-300 ease-in-out ${isSearchMode ? 'hidden' : 'flex'}`}>
-                    <div className="flex items-center gap-[8px]">
-                        <div className="h-[38px] max-w-[140px] flex items-center">
+                    <div className="flex items-center gap-[8px] flex-1 min-w-0">
+                        <div className="h-[38px] max-w-[140px] flex items-center shrink-0">
                             <img
                                 src={store?.logo ? getImageUrl(store.logo) : "/assets/logo.png"}
                                 alt="Logo"
@@ -785,11 +785,11 @@ export default function HomePixelPerfect() {
                                 }}
                             />
                         </div>
-                        <span className="font-semibold text-[0.9rem] text-[#6B7280]">
+                        <span className="font-semibold text-[0.9rem] text-[#6B7280] truncate">
                             {store?.name || 'Dapur QuackXel'}
                         </span>
                     </div>
-                    <div className="badge">
+                    <div className="badge shrink-0 ml-2">
                         {(() => {
                             if (!customerTable) return 'Meja ...';
                             const locationName = typeof customerTable.location === 'object' ? customerTable.location?.name : customerTable.location;
