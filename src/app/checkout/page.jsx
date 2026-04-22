@@ -143,7 +143,11 @@ export default function CheckoutPage() {
                     const storeRes = await getStore(storeId);
                     if (storeRes && storeRes.success && storeRes.data) {
                         const mode = storeRes.data.cashPaymentMode || 'post';
-                        try { sessionStorage.setItem('store_cashPaymentMode', mode); } catch (e) { }
+                        const isCashActive = storeRes.data.isCashActive ?? true;
+                        try { 
+                            sessionStorage.setItem('store_cashPaymentMode', mode); 
+                            sessionStorage.setItem('store_isCashActive', String(isCashActive));
+                        } catch (e) { }
                     }
                 } catch (e) { }
             }

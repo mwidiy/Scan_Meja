@@ -16,6 +16,7 @@ export default function PaymentPage() {
     const [selectedMethod, setSelectedMethod] = useState('qris');
     const [showSummary, setShowSummary] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCashActive, setIsCashActive] = useState(true);
     const isSubmittingRef = useRef(false); // Security: Synchronous ref for lock
 
 
@@ -68,6 +69,12 @@ export default function PaymentPage() {
 
                 // Clean up
                 // sessionStorage.removeItem('payment_state'); // REMOVED: Keep state for refresh/strict-mode
+                // Get Cash Activation state
+                const cashActiveStr = sessionStorage.getItem('store_isCashActive');
+                if (cashActiveStr === 'false') {
+                    setIsCashActive(false);
+                    setSelectedMethod('qris'); // Default to QRIS if cash is disabled
+                }
             }
         } catch (e) {
             if (process.env.NODE_ENV !== 'production') console.error("State parsing error", e);
@@ -444,29 +451,31 @@ export default function PaymentPage() {
                     </motion.div>
 
                     {/* Cash Card */}
-                    <motion.div
-                        className="method-card"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSelectedMethod('cash')}
-                        animate={{
-                            borderColor: selectedMethod === 'cash' ? '#FACC15' : 'transparent',
-                            backgroundColor: selectedMethod === 'cash' ? '#FEFCE8' : '#FFFFFF'
-                        }}
-                    >
-                        <div className="method-icon-wrap" style={{ background: '#FEF2F2' }}>
-                            <img src="/assets/Icon_Kasir.svg" alt="Tunai" />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>Cash</span>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-sec)', marginTop: 4 }}>
-                                Bayar tunai setelah pesanan siap
+                    {isCashActive && (
+                        <motion.div
+                            className="method-card"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedMethod('cash')}
+                            animate={{
+                                borderColor: selectedMethod === 'cash' ? '#FACC15' : 'transparent',
+                                backgroundColor: selectedMethod === 'cash' ? '#FEFCE8' : '#FFFFFF'
+                            }}
+                        >
+                            <div className="method-icon-wrap" style={{ background: '#FEF2F2' }}>
+                                <img src="/assets/Icon_Kasir.svg" alt="Tunai" />
                             </div>
-                        </div>
-                        <div className="radio-outer" style={{ borderColor: selectedMethod === 'cash' ? '#EAB308' : '#D1D5DB' }}>
-                            {selectedMethod === 'cash' && <motion.div layoutId="radio" className="radio-inner" />}
-                        </div>
-                    </motion.div>
+                            <div style={{ flex: 1 }}>
+                                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>Cash</span>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-sec)', marginTop: 4 }}>
+                                    Bayar tunai setelah pesanan siap
+                                </div>
+                            </div>
+                            <div className="radio-outer" style={{ borderColor: selectedMethod === 'cash' ? '#EAB308' : '#D1D5DB' }}>
+                                {selectedMethod === 'cash' && <motion.div layoutId="radio" className="radio-inner" />}
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             )}
 
