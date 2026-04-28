@@ -16,7 +16,7 @@ export default function TrackingPage() {
     const [paymentStatus, setPaymentStatus] = useState('paid');
     const [transactionCode, setTransactionCode] = useState('-');
     const [customerName, setCustomerName] = useState('-');
-    const [estimatedTime, setEstimatedTime] = useState('-');
+    const [customerName, setCustomerName] = useState('-');
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
     const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
     const [storeSettingKasirQr, setStoreSettingKasirQr] = useState(false); // NEW: Kasir QR Verification Flag
@@ -109,21 +109,9 @@ export default function TrackingPage() {
 
                 // Status Text Logic
                 // FIX 46: PWA QRIS Waiting Payment Guard
-                if (order.status === 'WaitingPayment') {
-                    setOrdersAhead(null);
-                    setEstimatedTime(null);
                 } else if (order.status === 'Pending' || order.status === 'Processing') {
                     setOrdersAhead(order.queuePosition || 1);
-                    if (res.data.predictedServiceTime) {
-                        setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
-                    }
                 } else if (order.status === 'Cancelled') {
-                    setOrdersAhead(null);
-                    setEstimatedTime(null);
-                } else {
-                    setOrdersAhead(null);
-                    setEstimatedTime(null);
-                }
 
                 // 4. Set WhatsApp Number from Store Data
                 if (order.store && order.store.whatsappNumber) {
@@ -222,9 +210,6 @@ export default function TrackingPage() {
                 }
                 if (parsed.customerName) {
                     setTimeout(() => setCustomerName(String(parsed.customerName).substring(0, 30).replace(/[<>&"']/g, '')), 0);
-                }
-                if (parsed.predictedServiceTime) {
-                    setTimeout(() => setEstimatedTime(`Estimasi selesai jam ${parsed.predictedServiceTime}`), 0);
                 }
             }
 
@@ -913,13 +898,6 @@ export default function TrackingPage() {
                                             orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
                                                 "Pesanan Diterima"}
                                 </h2>
-
-                                {estimatedTime && orderStatus !== 'cancelled' && orderStatus !== 'ready' && (
-                                    <div style={{ marginTop: 12, padding: '8px 20px', background: '#F3F4F6', borderRadius: 99, fontSize: 15, fontWeight: 600, color: '#4B5563', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                                        {estimatedTime}
-                                    </div>
-                                )}
                             </div>
 
                             {/* PROGRESS BAR (UPSCALED) */}

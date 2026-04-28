@@ -118,7 +118,7 @@ export default function StatusPage() {
       paymentStatus: order.paymentStatus,
       customerName: order.customerName || 'Pelanggan',
       queuePosition: order.queuePosition || 0,
-      predictedServiceTime: order.predictedServiceTime || null
+      queuePosition: order.queuePosition || 0
     };
     sessionStorage.setItem('waiting_state', JSON.stringify(safeOrder));
     router.push('/waiting');
