@@ -16,7 +16,6 @@ export default function TrackingPage() {
     const [paymentStatus, setPaymentStatus] = useState('paid');
     const [transactionCode, setTransactionCode] = useState('-');
     const [customerName, setCustomerName] = useState('-');
-    const [customerName, setCustomerName] = useState('-');
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
     const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
     const [storeSettingKasirQr, setStoreSettingKasirQr] = useState(false); // NEW: Kasir QR Verification Flag
@@ -109,9 +108,13 @@ export default function TrackingPage() {
 
                 // Status Text Logic
                 // FIX 46: PWA QRIS Waiting Payment Guard
+                if (order.status === 'WaitingPayment') {
+                    setOrdersAhead(null);
                 } else if (order.status === 'Pending' || order.status === 'Processing') {
                     setOrdersAhead(order.queuePosition || 1);
-                } else if (order.status === 'Cancelled') {
+                } else {
+                    setOrdersAhead(null);
+                }
 
                 // 4. Set WhatsApp Number from Store Data
                 if (order.store && order.store.whatsappNumber) {
