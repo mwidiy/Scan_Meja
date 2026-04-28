@@ -112,14 +112,8 @@ export default function TrackingPage() {
                 if (order.status === 'WaitingPayment') {
                     setOrdersAhead(null);
                     setEstimatedTime(null);
-                } else if (order.status === 'Pending') {
-                    const peopleAhead = order.queuePosition && order.queuePosition > 0 ? order.queuePosition - 1 : 0;
-                    setOrdersAhead(peopleAhead);
-                    if (res.data.predictedServiceTime) {
-                        setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
-                    }
-                } else if (order.status === 'Processing') {
-                    setOrdersAhead(0); // My turn
+                } else if (order.status === 'Pending' || order.status === 'Processing') {
+                    setOrdersAhead(order.queuePosition || 1);
                     if (res.data.predictedServiceTime) {
                         setEstimatedTime(`Estimasi selesai jam ${res.data.predictedServiceTime}`);
                     }
@@ -217,11 +211,9 @@ export default function TrackingPage() {
 
                     setTimeout(() => {
                         if (parsed.status === 'WaitingPayment') setOrdersAhead(null);
-                        else if (parsed.status === 'Pending') {
-                            const peopleAhead = parsed.queuePosition && parsed.queuePosition > 0 ? parsed.queuePosition - 1 : 0;
-                            setOrdersAhead(peopleAhead);
+                        else if (parsed.status === 'Pending' || parsed.status === 'Processing') {
+                            setOrdersAhead(parsed.queuePosition || 1);
                         }
-                        else if (parsed.status === 'Processing') setOrdersAhead(0);
                         else setOrdersAhead(null);
                     }, 0);
                 }
@@ -330,7 +322,7 @@ export default function TrackingPage() {
         const statusMsg = orderStatus === 'ready' ? 'Siap Diantar' : 
                           orderStatus === 'preparing' ? 'Sedang Disiapkan' : 
                           orderStatus === 'cancelled' ? 'Dibatalkan' : 
-                          (ordersAhead > 0 ? `Antrean ke-${ordersAhead}` : 'Giliran Saya');
+                          (ordersAhead > 0 ? `Antrean ke-${ordersAhead}` : 'Pesanan Saya');
 
         const message = `Halo Kak, saya *${customerName}* dengan Order ID *${transactionCode}*.\n\nStatus pesanan saya sekarang: *${statusMsg}*. \nMohon informasinya ya, terima kasih! 🙏`;
         // Ensure number format is correct (strip +, ensure 62)
@@ -898,26 +890,16 @@ export default function TrackingPage() {
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '0 12px' }}>
                                                     <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', marginBottom: 4, letterSpacing: '0.05em', lineHeight: 1.2 }}>
-                                                        SISA ANTREAN DI DEPAN ANDA
+                                                        NOMOR ANTRIAN ANDA
                                                     </span>
-                                                    {(ordersAhead > 0 && ordersAhead !== null) ? (
+                                                    {(ordersAhead !== null) ? (
                                                         <span style={{ fontSize: 64, fontWeight: 800, color: '#111827', letterSpacing: '-2px', lineHeight: 1 }}>
                                                             {ordersAhead}
                                                         </span>
                                                     ) : (
-                                                        (orderStatus === 'preparing' || orderStatus === 'received') ? (
-                                                            <motion.span
-                                                                animate={{ scale: [1, 1.05, 1], opacity: [1, 0.7, 1] }}
-                                                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                                                style={{ fontSize: 24, fontWeight: 800, color: '#10B981', lineHeight: 1.2 }}
-                                                            >
-                                                                Giliran Anda!
-                                                            </motion.span>
-                                                        ) : (
-                                                            <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', lineHeight: 1 }}>
-                                                                -
-                                                            </span>
-                                                        )
+                                                        <span style={{ fontSize: 48, fontWeight: 800, color: '#111827', lineHeight: 1 }}>
+                                                            -
+                                                        </span>
                                                     )}
                                                 </div>
                                             )}
