@@ -108,10 +108,13 @@ export default function TrackingPage() {
                 }
 
                 // Status Text Logic
-                // FIX 46: PWA QRIS Waiting Payment Guard
-                } else if (order.status === 'Pending' || order.status === 'Processing') {
+                if (order.status === 'Pending' || order.status === 'Processing') {
                     setOrdersAhead(order.queuePosition || 1);
                 } else if (order.status === 'Cancelled') {
+                    setOrdersAhead(null);
+                } else {
+                    setOrdersAhead(null);
+                }
 
                 // 4. Set WhatsApp Number from Store Data
                 if (order.store && order.store.whatsappNumber) {
