@@ -157,11 +157,13 @@ function QrisContent() {
                         const tkn = pd.snapToken || "";
                         const ck  = pd.clientKey  || "";
                         const gw  = pd.gateway    || "homemade";
+                        const isProd = pd.isProduction ?? true;
 
                         // Set state so Snap can render without a second fetch
                         if (tkn) setSnapToken(tkn);
                         if (ck)  setSnapClientKey(ck);
                         if (gw)  setGateway(gw);
+                        setIsSnapProduction(isProd);
 
                         // Backup
                         const newExpiry = Date.now() + 900000;
@@ -173,7 +175,8 @@ function QrisContent() {
                             expiryTime: newExpiry,
                             snapToken: tkn,
                             snapClientKey: ck,
-                            gateway: gw
+                            gateway: gw,
+                            isSnapProduction: isProd
                         }));
                         setLoadingQr(false);
                     } catch (err) {
@@ -213,6 +216,7 @@ function QrisContent() {
                 let preservedToken = "";
                 let preservedClientKey = "";
                 let preservedGateway = "homemade";
+                let preservedIsProd = true;
 
                 if (existingBackupStr) {
                     try {
@@ -223,6 +227,7 @@ function QrisContent() {
                             if (parsedBkp.snapToken)    preservedToken     = parsedBkp.snapToken;
                             if (parsedBkp.snapClientKey) preservedClientKey = parsedBkp.snapClientKey;
                             if (parsedBkp.gateway)      preservedGateway   = parsedBkp.gateway;
+                            if (parsedBkp.isSnapProduction !== undefined) preservedIsProd = parsedBkp.isSnapProduction;
                         }
                     } catch(e) {}
                 }
@@ -232,6 +237,7 @@ function QrisContent() {
                 if (preservedToken)     setSnapToken(preservedToken);
                 if (preservedClientKey) setSnapClientKey(preservedClientKey);
                 if (preservedGateway !== 'homemade') setGateway(preservedGateway);
+                setIsSnapProduction(preservedIsProd);
 
                 localStorage.setItem('qris_backup', JSON.stringify({
                     id: idParam,
@@ -240,7 +246,8 @@ function QrisContent() {
                     expiryTime: existingExpiry,
                     snapToken: preservedToken,       // Preserved from old backup, not empty state
                     snapClientKey: preservedClientKey, // Preserved from old backup, not empty state
-                    gateway: preservedGateway          // Preserved from old backup, not empty state
+                    gateway: preservedGateway,         // Preserved from old backup, not empty state
+                    isSnapProduction: preservedIsProd
                 }));
             }
 
@@ -258,6 +265,7 @@ function QrisContent() {
                     if (b.snapToken) setSnapToken(b.snapToken);
                     if (b.snapClientKey) setSnapClientKey(b.snapClientKey);
                     if (b.gateway) setGateway(b.gateway);
+                    if (b.isSnapProduction !== undefined) setIsSnapProduction(b.isSnapProduction);
                 }
             }
 
@@ -447,7 +455,8 @@ function QrisContent() {
                                 ...b,
                                 snapToken: newToken || b.snapToken || "",
                                 snapClientKey: newKey || b.snapClientKey || "",
-                                gateway: newGateway || b.gateway || "homemade"
+                                gateway: newGateway || b.gateway || "homemade",
+                                isSnapProduction: isProduction !== undefined ? isProduction : b.isSnapProduction
                             }));
                         } catch(e) {}
                     }
