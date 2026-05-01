@@ -318,6 +318,11 @@ function QrisContent() {
         socket.on('connect', () => {
             if (process.env.NODE_ENV !== 'production') console.log("Socket connected:", socket.id);
             socket.emit('join_room', orderId); // Emit ID explicitly
+            
+            // NEW: Langsung cek status ke server pas nyambung lagi (antisipasi event kelewat pas HP mati/pindah app)
+            if (verifyAndHandleSuccessRef.current) {
+                verifyAndHandleSuccessRef.current(orderId);
+            }
         });
 
         socket.on('order_update', (data) => {
@@ -546,9 +551,7 @@ function QrisContent() {
             // TAHAP 53: Throttling Polling in Background Tab
             if (document.hidden) return; // Do not poll if user is looking at WhatsApp/TikTok
 
-            // PERF: Skip polling if socket is alive and connected (webhook will handle it)
-            if (socketRef.current && socketRef.current.connected) return;
-
+            // REMOVED: Kita tetap polling meskipun socket nyambung sebagai backup aman (Double-Safety)
             try {
                 const API_URL = getDynamicUrl();
                 const res = await fetch(`${API_URL}/api/payment/check-status/${orderId}`);
@@ -562,8 +565,17 @@ function QrisContent() {
             }
         };
 
-        let poll = setInterval(checkStatus, 8000); // PERF: 8s instead of 5s
-        return () => clearInterval(poll);
+        // NEW: Langsung pancing cek status pas user balik ke tab (Foreground transition)
+        const handleVisibilityChange = () => {
+            if (!document.hidden) checkStatus();
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        let poll = setInterval(checkStatus, 5000); // Dipercepat dari 8s ke 5s biar lebih responsif
+        return () => {
+            clearInterval(poll);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, [orderId, isPaid, amount, isExpired]); // REMOVE handleSuccess
 
     const formatTime = (sec) => {
