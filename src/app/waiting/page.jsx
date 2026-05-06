@@ -20,6 +20,7 @@ export default function TrackingPage() {
     const [mockDictionary, setMockDictionary] = useState({}); // TAHAP 71: Dictionary for local mock images
     const [storeSettingKasirQr, setStoreSettingKasirQr] = useState(false); // NEW: Kasir QR Verification Flag
     const [storeId, setStoreId] = useState(null);
+    const [targetTime, setTargetTime] = useState(null);
 
 
     // --- WHATSAPP LOGIC (Moved up) ---
@@ -126,6 +127,7 @@ export default function TrackingPage() {
                     setStoreSettingKasirQr(order.store.isKasirQrVerificationEnabled);
                 }
                 if (order.storeId) setStoreId(order.storeId);
+                if (order.targetTime) setTargetTime(order.targetTime);
 
 
 
@@ -515,6 +517,20 @@ export default function TrackingPage() {
                     font-size: 16px;
                     color: var(--text-secondary);
                     line-height: 1.5;
+                    margin-bottom: 12px;
+                }
+                
+                .estimate-box {
+                    background: #FEF3C7;
+                    border: 1.5px dashed #F59E0B;
+                    padding: 12px 20px;
+                    border-radius: 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: #B45309;
+                    font-weight: 700;
+                    font-size: 15px;
                 }
                 
                 /* PROGRESS BAR (UPSCALED) */
@@ -901,6 +917,19 @@ export default function TrackingPage() {
                                             orderStatus === 'cancelled' ? "Pesanan Dibatalkan" :
                                                 "Pesanan Diterima"}
                                 </h2>
+
+                                {targetTime && orderStatus !== 'ready' && orderStatus !== 'cancelled' && (
+                                    <motion.div 
+                                        className="estimate-box"
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                    >
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Estimasi Selesai: {new Date(targetTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </motion.div>
+                                )}
                             </div>
 
                             {/* PROGRESS BAR (UPSCALED) */}
