@@ -27,11 +27,17 @@ function WelcomeContent() {
             newUrl.searchParams.delete('s');
             newUrl.searchParams.delete('p');
             newUrl.searchParams.delete('n');
+            newUrl.searchParams.delete('jt');
             newUrl.searchParams.delete('sig');
             window.history.replaceState({}, '', newUrl);
         };
 
         // NEW: Magical Identity from WhatsApp
+        const phone = searchParams.get('p');
+        const nameParam = searchParams.get('n');
+        const jidType = searchParams.get('jt'); // TAHAP 39: JID Type (lid or s.whatsapp.net)
+        const sig = searchParams.get('sig');
+
         if (phone && sig) {
             localStorage.setItem('customer_phone_wa', phone);
             localStorage.setItem('customer_sig_wa', sig);
@@ -39,6 +45,10 @@ function WelcomeContent() {
                 localStorage.setItem('customerName', nameParam);
                 setName(nameParam);
             }
+            if (jidType) {
+                localStorage.setItem('customerPhoneJidType', jidType);
+            }
+            console.log('✨ Magical Identity Captured:', { phone, nameParam, jidType });
         }
 
         // Case 1: Scanning a specific Table (by QR or direct ID)
