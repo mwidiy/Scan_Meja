@@ -4,50 +4,68 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { getTableByQrCode } from '../services/api';
+import { getTableByQrCode, getStore } from '../services/api';
 
 function WelcomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [name, setName] = useState('');
 
-    // --- Logic Check Table ID from URL (Silent) ---
+    // --- Logic Check Table ID or Store ID from URL (Silent) ---
     useEffect(() => {
         let tableId = searchParams.get('tableId');
+        let storeId = searchParams.get('storeId');
 
-        // Security: Sanitize Table ID (Alphanumeric + dash only)
+        const cleanUrl = () => {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('tableId');
+            newUrl.searchParams.delete('storeId');
+            window.history.replaceState({}, '', newUrl);
+        };
+
+        // Case 1: Scanning a specific Table
         if (tableId && /^[a-zA-Z0-9\-_]+$/.test(tableId)) {
             const verify = async () => {
                 try {
                     const data = await getTableByQrCode(tableId);
-                    // Security: Verify structure before storage
                     if (data && data.id && typeof data.id === 'number') {
-                        // Check if table is active
                         if (data.isActive === false) {
                             router.push('/close');
                             return;
                         }
-
                         localStorage.setItem('customer_table', JSON.stringify(data));
-
-
-                        // Optional: Clean URL without reload for normal users
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.delete('tableId');
-                        window.history.replaceState({}, '', newUrl);
-                    } else {
-                        if (process.env.NODE_ENV !== 'production') {
-                            console.warn('Table verification returned no valid data for:', tableId);
-                        }
+                        cleanUrl();
                     }
                 } catch (e) {
-                    // Silent fail - network error or invalid ID shouldn't crash app
-                    if (process.env.NODE_ENV !== 'production') {
-                        console.warn("Silent table check failed (network error?):", e.message);
-                    }
+                    if (process.env.NODE_ENV !== 'production') console.warn("Table check failed:", e.message);
                 }
             };
             verify();
+        } 
+        // Case 2: Landing from WhatsApp (Store ID only)
+        else if (storeId && /^\d+$/.test(storeId)) {
+            const fetchStoreInfo = async () => {
+                try {
+                    const storeData = await getStore(storeId);
+                    
+                    if (storeData) {
+                        const virtualTable = {
+                            id: null, // No physical table
+                            name: 'Takeaway',
+                            location: {
+                                name: 'WhatsApp Bot',
+                                storeId: parseInt(storeId),
+                                store: storeData
+                            }
+                        };
+                        localStorage.setItem('customer_table', JSON.stringify(virtualTable));
+                        cleanUrl();
+                    }
+                } catch (e) {
+                    if (process.env.NODE_ENV !== 'production') console.warn("Store fetch failed:", e.message);
+                }
+            };
+            fetchStoreInfo();
         }
     }, [searchParams]);
 
