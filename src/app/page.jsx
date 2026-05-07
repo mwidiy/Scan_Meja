@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { getTableByQrCode, getStore } from '../services/api';
+import { getTableByQrCode, getStore, getTableById } from '../services/api';
 
 function WelcomeContent() {
     const router = useRouter();
@@ -13,27 +13,56 @@ function WelcomeContent() {
 
     // --- Logic Check Table ID or Store ID from URL (Silent) ---
     useEffect(() => {
-        let tableId = searchParams.get('tableId');
-        let storeId = searchParams.get('storeId');
+        let tableId = searchParams.get('tableId') || searchParams.get('t');
+        let storeId = searchParams.get('storeId') || searchParams.get('s');
+        let phone = searchParams.get('p');
+        let nameParam = searchParams.get('n');
+        let sig = searchParams.get('sig');
 
         const cleanUrl = () => {
             const newUrl = new URL(window.location.href);
             newUrl.searchParams.delete('tableId');
             newUrl.searchParams.delete('storeId');
+            newUrl.searchParams.delete('t');
+            newUrl.searchParams.delete('s');
+            newUrl.searchParams.delete('p');
+            newUrl.searchParams.delete('n');
+            newUrl.searchParams.delete('sig');
             window.history.replaceState({}, '', newUrl);
         };
 
-        // Case 1: Scanning a specific Table
-        if (tableId && /^[a-zA-Z0-9\-_]+$/.test(tableId)) {
+        // NEW: Magical Identity from WhatsApp
+        if (phone && sig) {
+            localStorage.setItem('customer_phone_wa', phone);
+            localStorage.setItem('customer_sig_wa', sig);
+            if (nameParam) {
+                localStorage.setItem('customerName', nameParam);
+                setName(nameParam);
+            }
+        }
+
+        // Case 1: Scanning a specific Table (by QR or direct ID)
+        if (tableId) {
             const verify = async () => {
                 try {
-                    const data = await getTableByQrCode(tableId);
-                    if (data && data.id && typeof data.id === 'number') {
+                    // Try ID first if it's numeric, otherwise assume QR Code
+                    const data = /^\d+$/.test(tableId) 
+                        ? await getTableById(tableId)
+                        : await getTableByQrCode(tableId);
+
+                    if (data && data.id) {
                         if (data.isActive === false) {
                             router.push('/close');
                             return;
                         }
                         localStorage.setItem('customer_table', JSON.stringify(data));
+                        
+                        // AUTO-REDIRECT MAGIC: If we have name and table, go to home instantly
+                        const hasName = localStorage.getItem('customerName');
+                        if (hasName && phone && sig) {
+                            router.push('/home');
+                        }
+
                         cleanUrl();
                     }
                 } catch (e) {
@@ -42,7 +71,7 @@ function WelcomeContent() {
             };
             verify();
         } 
-        // Case 2: Landing from WhatsApp (Store ID only)
+        // Case 2: Landing from WhatsApp (Store ID only - legacy or simple)
         else if (storeId && /^\d+$/.test(storeId)) {
             const fetchStoreInfo = async () => {
                 try {

@@ -84,6 +84,21 @@ export const getTableByQrCode = async (code) => {
     }
 };
 
+export const getTableById = async (id) => {
+    const API_URL = getDynamicUrl();
+    try {
+        if (process.env.NODE_ENV !== 'production') console.log("🔍 [Debug] Fetching Table by ID:", `${API_URL}/api/tables/${id}`);
+        const res = await fetch(`${API_URL}/api/tables/${id}`, { cache: 'no-store' });
+        if (!res.ok) {
+            throw new Error(`Failed to fetch table: ${res.statusText}`);
+        }
+        return await res.json();
+    } catch (error) {
+        console.error('Error fetching table by id:', error);
+        return null;
+    }
+};
+
 export const getStore = async (storeId) => {
     const API_URL = getDynamicUrl();
     try {

@@ -145,6 +145,9 @@ export default function PaymentPage() {
                 }
             }
 
+            const customerPhone = localStorage.getItem('customer_phone_wa');
+            const customerPhoneSig = localStorage.getItem('customer_sig_wa');
+
             const payload = {
                 customerName: finalName,
                 tableId: finalTableId,
@@ -160,7 +163,9 @@ export default function PaymentPage() {
                 orderType: orderState.orderType,
                 note: orderState.notes,
                 deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null,
-                cashPaymentMode: activeCashMode // Include this so /Kasir or /order knows the context
+                cashPaymentMode: activeCashMode, // Include this so /Kasir or /order knows the context
+                customerPhone: customerPhone,
+                customerPhoneSig: customerPhoneSig
             };
 
             // TAHAP 36: OPTIMISTIC CHECKOUT
