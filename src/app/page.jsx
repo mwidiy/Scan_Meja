@@ -15,9 +15,10 @@ function WelcomeContent() {
     useEffect(() => {
         let tableId = searchParams.get('tableId') || searchParams.get('t');
         let storeId = searchParams.get('storeId') || searchParams.get('s');
-        let phone = searchParams.get('p');
-        let nameParam = searchParams.get('n');
-        let sig = searchParams.get('sig');
+        const phone = searchParams.get('p');
+        const nameParam = searchParams.get('n');
+        const jidType = searchParams.get('jt');
+        const sig = searchParams.get('sig');
 
         const cleanUrl = () => {
             const newUrl = new URL(window.location.href);
@@ -31,12 +32,6 @@ function WelcomeContent() {
             newUrl.searchParams.delete('sig');
             window.history.replaceState({}, '', newUrl);
         };
-
-        // NEW: Magical Identity from WhatsApp
-        const phone = searchParams.get('p');
-        const nameParam = searchParams.get('n');
-        const jidType = searchParams.get('jt'); // TAHAP 39: JID Type (lid or s.whatsapp.net)
-        const sig = searchParams.get('sig');
 
         if (phone && sig) {
             localStorage.setItem('customer_phone_wa', phone);
