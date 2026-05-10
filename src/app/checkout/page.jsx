@@ -23,6 +23,11 @@ export default function CheckoutPage() {
     const [recommendations, setRecommendations] = useState([]);
     const [upsellTitle, setUpsellTitle] = useState('Teman Makan Enak');
     const [upsellEmoji, setUpsellEmoji] = useState('🍟');
+    const [storeSettings, setStoreSettings] = useState({
+        isDineInActive: true,
+        isTakeawayActive: true,
+        isDeliveryActive: false
+    });
 
     // Haptic Feedback
     const vibrate = (ms = 10) => {
@@ -148,6 +153,31 @@ export default function CheckoutPage() {
                             sessionStorage.setItem('store_cashPaymentMode', mode); 
                             sessionStorage.setItem('store_isCashActive', String(isCashActive));
                         } catch (e) { }
+
+                        // Update Store Settings for Order Methods
+                        const settings = {
+                            isDineInActive: storeRes.data.isDineInActive ?? true,
+                            isTakeawayActive: storeRes.data.isTakeawayActive ?? true,
+                            isDeliveryActive: storeRes.data.isDeliveryActive ?? false
+                        };
+                        setStoreSettings(settings);
+
+                        // Auto-adjust orderType if current is disabled
+                        setOrderTypeState(current => {
+                            if (current === 'dinein' && !settings.isDineInActive) {
+                                if (settings.isTakeawayActive) return 'takeaway';
+                                if (settings.isDeliveryActive) return 'delivery';
+                            }
+                            if (current === 'takeaway' && !settings.isTakeawayActive) {
+                                if (settings.isDineInActive) return 'dinein';
+                                if (settings.isDeliveryActive) return 'delivery';
+                            }
+                            if (current === 'delivery' && !settings.isDeliveryActive) {
+                                if (settings.isDineInActive) return 'dinein';
+                                if (settings.isTakeawayActive) return 'takeaway';
+                            }
+                            return current;
+                        });
                     }
                 } catch (e) { }
             }
@@ -391,12 +421,22 @@ export default function CheckoutPage() {
                 .segment-indicator { 
                     position: absolute; top: 4px; bottom: 4px; background: white; 
                     border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); 
-                    transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1; 
-                    width: calc(33.33% - 5.33px); 
+                    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1; 
                 }
-                .pos-0 { left: 4px; } 
-                .pos-1 { left: calc(33.33% + 1.33px); } 
-                .pos-2 { left: calc(66.66% - 1.33px); }
+                /* Dynamic Pos Calculation */
+                .pos-dinein { left: 4px; width: calc(33.33% - 5.33px); } 
+                .pos-takeaway { left: calc(33.33% + 1.33px); width: calc(33.33% - 5.33px); } 
+                .pos-delivery { left: calc(66.66% - 1.33px); width: calc(33.33% - 5.33px); }
+                
+                /* Handle 2-button layout */
+                .segment-control.count-2 { grid-template-columns: 1fr 1fr; }
+                .segment-control.count-2 .segment-indicator { width: calc(50% - 6px); }
+                .segment-control.count-2 .pos-takeaway { left: calc(50% + 2px); }
+                .segment-control.count-2 .pos-delivery { left: calc(50% + 2px); }
+
+                /* Handle 1-button layout */
+                .segment-control.count-1 { grid-template-columns: 1fr; }
+                .segment-control.count-1 .segment-indicator { width: calc(100% - 8px); left: 4px; }
 
                 /* --- Receipt Card (Compact) --- */
                 .receipt-card { 
@@ -523,18 +563,29 @@ export default function CheckoutPage() {
                 </header>
 
                 {/* 2. Segmented Order Type */}
-                <div className="segment-control">
-                    <div className={`segment-indicator pos-${orderType === 'dinein' ? '0' : orderType === 'takeaway' ? '1' : '2'}`}></div>
-                    <button className={`segment-btn ${orderType === 'dinein' ? 'active' : ''}`} onClick={() => setOrderType('dinein')}>
-                        <span style={{ fontSize: '1.2rem' }}>🍽️</span> Makan Sini
-                    </button>
-                    <button className={`segment-btn ${orderType === 'takeaway' ? 'active' : ''}`} onClick={() => setOrderType('takeaway')}>
-                        <span style={{ fontSize: '1.2rem' }}>🥡</span> Bungkus
-                    </button>
-                    <button className={`segment-btn ${orderType === 'delivery' ? 'active' : ''}`} onClick={() => setOrderType('delivery')}>
-                        <span style={{ fontSize: '1.2rem' }}>🛵</span> Antar
-                    </button>
-                </div>
+                {(storeSettings.isDineInActive || storeSettings.isTakeawayActive || storeSettings.isDeliveryActive) && (
+                    <div className={`segment-control count-${[storeSettings.isDineInActive, storeSettings.isTakeawayActive, storeSettings.isDeliveryActive].filter(Boolean).length}`}>
+                        <div className={`segment-indicator pos-${orderType}`}></div>
+                        
+                        {storeSettings.isDineInActive && (
+                            <button className={`segment-btn ${orderType === 'dinein' ? 'active' : ''}`} onClick={() => setOrderType('dinein')}>
+                                <span style={{ fontSize: '1.2rem' }}>🍽️</span> Makan Sini
+                            </button>
+                        )}
+                        
+                        {storeSettings.isTakeawayActive && (
+                            <button className={`segment-btn ${orderType === 'takeaway' ? 'active' : ''}`} onClick={() => setOrderType('takeaway')}>
+                                <span style={{ fontSize: '1.2rem' }}>🥡</span> Bungkus
+                            </button>
+                        )}
+                        
+                        {storeSettings.isDeliveryActive && (
+                            <button className={`segment-btn ${orderType === 'delivery' ? 'active' : ''}`} onClick={() => setOrderType('delivery')}>
+                                <span style={{ fontSize: '1.2rem' }}>🛵</span> Antar
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* 3. Receipt Card */}
                 <div className="receipt-card">
