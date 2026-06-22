@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createOrder, getImageUrl, getProducts, getStore } from '../../services/api';
+import { createOrder, getImageUrl, getProducts, getStore, getShippingZones } from '../../services/api';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -13,6 +13,12 @@ export default function CheckoutPage() {
     const locationInputRef = useRef(null);
     const [locationModalOpen, setLocationModalOpen] = useState(false);
     const [locationDraft, setLocationDraft] = useState('');
+    
+    // Shipping feature states
+    const [shippingZones, setShippingZones] = useState([]);
+    const [selectedZone, setSelectedZone] = useState(null);
+    const [addressDetail, setAddressDetail] = useState('');
+    
     const [notes, setNotes] = useState('');
     const [notesDraft, setNotesDraft] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,10 +95,19 @@ export default function CheckoutPage() {
         } catch (e) { }
         try {
             const saved = localStorage.getItem('checkout_location_v1');
+            const savedZone = localStorage.getItem('checkout_zone_v1');
+            const savedAddress = localStorage.getItem('checkout_address_v1');
             // Security: Sanitize location from storage
             if (saved && !location) {
                 const safeLocation = String(saved).substring(0, 100).replace(/[<>{}()[\]\\;`$]/g, '');
                 setLocation(safeLocation);
+            }
+            if (savedZone && !selectedZone) {
+                try { setSelectedZone(JSON.parse(savedZone)); } catch(e){}
+            }
+            if (savedAddress && !addressDetail) {
+                const safeAddr = String(savedAddress).substring(0, 100).replace(/[<>{}()[\]\\;`$]/g, '');
+                setAddressDetail(safeAddr);
             }
         } catch (e) { }
 
@@ -176,8 +191,17 @@ export default function CheckoutPage() {
                                 if (settings.isDineInActive) return 'dinein';
                                 if (settings.isTakeawayActive) return 'takeaway';
                             }
-                            return current;
                         });
+
+                        // Fetch Shipping Zones if delivery is active
+                        if (settings.isDeliveryActive) {
+                            try {
+                                const zonesRes = await getShippingZones(storeId);
+                                if (zonesRes && zonesRes.success) {
+                                    setShippingZones(zonesRes.data || []);
+                                }
+                            } catch (e) { console.error('Error fetching shipping zones'); }
+                        }
                     }
                 } catch (e) { }
             }
@@ -303,11 +327,29 @@ export default function CheckoutPage() {
         if (type === 'delivery') setTimeout(() => locationInputRef.current?.focus(), 80);
     };
 
-    const openLocationModal = () => { setLocationDraft(location || ''); setLocationModalOpen(true); vibrate(); };
+    const openLocationModal = () => { 
+        setLocationDraft(location || ''); 
+        setAddressDetail(addressDetail || '');
+        setLocationModalOpen(true); 
+        vibrate(); 
+    };
     const saveLocationFromModal = () => {
-        setLocation(locationDraft);
-        setCheckoutState(prev => ({ ...prev, location: locationDraft }));
-        try { localStorage.setItem('checkout_location_v1', locationDraft); } catch (e) { }
+        let finalLocation = '';
+        if (storeSettings.isDeliveryActive && selectedZone) {
+            finalLocation = `${selectedZone.name} - ${addressDetail}`;
+        } else {
+            finalLocation = locationDraft;
+        }
+
+        setLocation(finalLocation);
+        setCheckoutState(prev => ({ ...prev, location: finalLocation }));
+        try { 
+            localStorage.setItem('checkout_location_v1', finalLocation); 
+            if (selectedZone) {
+                localStorage.setItem('checkout_zone_v1', JSON.stringify(selectedZone));
+                localStorage.setItem('checkout_address_v1', addressDetail);
+            }
+        } catch (e) { }
         setLocationModalOpen(false); vibrate();
     };
     const openNotesModal = () => { setNotesDraft(notes || ''); setNotesOpen(true); vibrate(); };
@@ -340,6 +382,8 @@ export default function CheckoutPage() {
             }
         } catch (e) { }
 
+        const shippingFee = (orderType === 'delivery' && selectedZone) ? Number(selectedZone.fee) : 0;
+
         const stateData = {
             items: checkoutState.items,
             subtotal: checkoutState.subtotal,
@@ -347,6 +391,8 @@ export default function CheckoutPage() {
             location: orderType === 'delivery' ? location : null,
             notes: notes,
             storeId: storeId,
+            shippingZoneId: selectedZone ? selectedZone.id : null,
+            shippingFee: shippingFee,
             cashPaymentMode: (() => { try { return sessionStorage.getItem('store_cashPaymentMode') || 'post'; } catch (e) { return 'post'; } })()
         };
         // Security: Use sessionStorage instead of URL for state transfer
@@ -355,7 +401,8 @@ export default function CheckoutPage() {
     };
 
     const formatRupiah = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
-    const finalTotal = checkoutState.subtotal;
+    const shippingCost = (orderType === 'delivery' && selectedZone) ? Number(selectedZone.fee) : 0;
+    const finalTotal = checkoutState.subtotal + shippingCost;
 
     return (
         <>
@@ -626,6 +673,12 @@ export default function CheckoutPage() {
 
                     {checkoutState.items.length > 0 && (
                         <div>
+                            {orderType === 'delivery' && selectedZone && (
+                                <div className="bill-row" style={{ marginTop: '12px' }}>
+                                    <span>Ongkos Kirim ({selectedZone.name})</span>
+                                    <span>{formatRupiah(selectedZone.fee)}</span>
+                                </div>
+                            )}
                             <div className="bill-total">
                                 <span className="total-label">Total</span>
                                 <span className="total-value">{formatRupiah(finalTotal)}</span>
@@ -693,20 +746,60 @@ export default function CheckoutPage() {
                     <div className="modal-overlay" onClick={() => setLocationModalOpen(false)}>
                         <div className="modal-content" onClick={e => e.stopPropagation()}>
                             <div className="modal-title">Antar Kemana?</div>
-                            <textarea
-                                className="modal-input"
-                                rows={2}
-                                autoFocus
-                                maxLength={100}
-                                value={locationDraft}
-                                onChange={(e) => {
-                                    // Security: Strict Alphanumeric + Basic Punctuation
-                                    const safe = e.target.value.replace(/[^a-zA-Z0-9 .,!?()\-]/g, '').substring(0, 100);
-                                    setLocationDraft(safe);
-                                }}
-                                placeholder="Jalan, Nomor Rumah, Patokan..."
-                            />
-                            <button className="modal-btn" onClick={saveLocationFromModal}>Simpan Lokasi</button>
+                            
+                            {storeSettings.isDeliveryActive && shippingZones.length > 0 ? (
+                                <>
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-sec)', marginBottom: '8px', fontWeight: '600' }}>Pilih Zona / Kecamatan</label>
+                                        <select 
+                                            className="modal-input" 
+                                            style={{ appearance: 'none', background: '#F9FAFB url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111827%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 16px top 50%', backgroundSize: '12px auto' }}
+                                            value={selectedZone ? selectedZone.id : ''}
+                                            onChange={(e) => {
+                                                const zoneId = parseInt(e.target.value);
+                                                const zone = shippingZones.find(z => z.id === zoneId);
+                                                setSelectedZone(zone || null);
+                                            }}
+                                        >
+                                            <option value="">-- Pilih Zona --</option>
+                                            {shippingZones.map(zone => (
+                                                <option key={zone.id} value={zone.id}>
+                                                    {zone.name} (+{formatRupiah(zone.fee)})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-sec)', marginBottom: '8px', fontWeight: '600' }}>Detail Alamat (Opsional)</label>
+                                        <textarea
+                                            className="modal-input"
+                                            rows={2}
+                                            maxLength={100}
+                                            value={addressDetail}
+                                            onChange={(e) => {
+                                                const safe = e.target.value.replace(/[^a-zA-Z0-9 .,!?()\-]/g, '').substring(0, 100);
+                                                setAddressDetail(safe);
+                                            }}
+                                            placeholder="Jalan, Nomor Rumah, Patokan..."
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <textarea
+                                    className="modal-input"
+                                    rows={2}
+                                    autoFocus
+                                    maxLength={100}
+                                    value={locationDraft}
+                                    onChange={(e) => {
+                                        // Security: Strict Alphanumeric + Basic Punctuation
+                                        const safe = e.target.value.replace(/[^a-zA-Z0-9 .,!?()\-]/g, '').substring(0, 100);
+                                        setLocationDraft(safe);
+                                    }}
+                                    placeholder="Jalan, Nomor Rumah, Patokan..."
+                                />
+                            )}
+                            <button className="modal-btn" onClick={saveLocationFromModal} disabled={storeSettings.isDeliveryActive && shippingZones.length > 0 && !selectedZone}>Simpan Lokasi</button>
                         </div>
                     </div>
                 )}

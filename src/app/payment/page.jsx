@@ -54,6 +54,8 @@ export default function PaymentPage() {
                 const orderType = parsed.orderType || 'dinein';
                 const location = String(parsed.location || '').substring(0, 100).replace(/[<>]/g, '');
                 const notes = String(parsed.notes || '').substring(0, 100).replace(/[<>{}]/g, ''); // Stricter sanitization
+                const shippingZoneId = parsed.shippingZoneId ? parseInt(parsed.shippingZoneId) : null;
+                const shippingFee = parsed.shippingFee ? Number(parsed.shippingFee) : 0;
 
                 // Security: Whitelist orderType
                 const VALID_ORDER_TYPES = ['dinein', 'takeaway', 'delivery'];
@@ -64,7 +66,7 @@ export default function PaymentPage() {
 
                 // Fix: Wrap state update in setTimeout to avoid "setState during render" warning/error
                 setTimeout(() => {
-                    setOrderState({ items, subtotal: safeSubtotal, orderType: safeOrderType, location, notes });
+                    setOrderState({ items, subtotal: safeSubtotal, orderType: safeOrderType, location, notes, shippingZoneId, shippingFee });
                 }, 0);
 
                 // Clean up
@@ -164,6 +166,8 @@ export default function PaymentPage() {
                 orderType: orderState.orderType,
                 note: orderState.notes,
                 deliveryAddress: orderState.orderType === 'delivery' ? orderState.location : null,
+                shippingZoneId: orderState.shippingZoneId,
+                shippingFee: orderState.shippingFee,
                 cashPaymentMode: activeCashMode, // Include this so /Kasir or /order knows the context
                 customerPhone: customerPhone,
                 customerPhoneSig: customerPhoneSig,
@@ -225,6 +229,7 @@ export default function PaymentPage() {
     };
 
     const subtotal = orderState.items.reduce((s, it) => s + (it.price || 0) * (it.qty || 0), 0) || orderState.subtotal || 0;
+    const finalTotal = subtotal + (orderState.shippingFee || 0);
 
     return (
         <motion.div
@@ -497,7 +502,7 @@ export default function PaymentPage() {
                     <div className="total-row" onClick={() => setShowSummary(true)}>
                         <span>Total Pembayaran</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span className="total-price">{formatRupiah(subtotal)}</span>
+                            <span className="total-price">{formatRupiah(finalTotal)}</span>
                             <span style={{ fontSize: '0.8rem', transform: 'rotate(-90deg)' }}>›</span>
                         </div>
                     </div>
@@ -557,6 +562,12 @@ export default function PaymentPage() {
                                 <span>Subtotal</span>
                                 <span>{formatRupiah(subtotal)}</span>
                             </div>
+                            {orderState.shippingFee > 0 && (
+                                <div className="receipt-item">
+                                    <span>Ongkos Kirim</span>
+                                    <span>{formatRupiah(orderState.shippingFee)}</span>
+                                </div>
+                            )}
                             <div className="receipt-item">
                                 <span>Pajak & Layanan</span>
                                 <span>Rp 0</span>
@@ -566,7 +577,7 @@ export default function PaymentPage() {
 
                             <div className="receipt-total">
                                 <span>Total Tagihan</span>
-                                <span style={{ color: 'var(--danger)' }}>{formatRupiah(subtotal)}</span>
+                                <span style={{ color: 'var(--danger)' }}>{formatRupiah(finalTotal)}</span>
                             </div>
 
                             <button

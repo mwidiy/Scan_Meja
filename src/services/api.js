@@ -267,3 +267,19 @@ export const cancelOrder = async (transactionCode, reason) => {
         throw error;
     }
 };
+
+// --- SHIPPING ZONES ---
+export const getShippingZones = async (storeId) => {
+    const API_URL = getDynamicUrl();
+    try {
+        const query = storeId ? `?storeId=${storeId}` : '';
+        const res = await fetch(`${API_URL}/api/shipping-zones${query}`, { cache: 'no-store' });
+        if (!res.ok) {
+            throw new Error(`Failed to fetch shipping zones: ${res.statusText}`);
+        }
+        return await res.json();
+    } catch (error) {
+        console.error('Error fetching shipping zones:', error);
+        return { success: false, data: [] };
+    }
+};
