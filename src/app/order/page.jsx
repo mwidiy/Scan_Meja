@@ -73,6 +73,10 @@ export default function ReceiptPage() {
                             fetchOrderByCode(response.data.transactionCode);
 
                             // TAHAP 52 FIX: Loading selesai setelah server mengembalikan ID trx asli
+                            // TAHAP 57 FIX: Pastikan URL memiliki orderId sehingga jika user kembali dari WA, pwa tahu id pesanan
+                            if (window.history.replaceState && !window.location.search.includes(response.data.transactionCode)) {
+                                window.history.replaceState(null, '', `/order?orderId=${response.data.transactionCode}`);
+                            }
                             setIsLoading(false);
 
                         } catch (err) {
@@ -146,6 +150,12 @@ export default function ReceiptPage() {
                                 transactionCode: safeCode,
                                 storeName: safeStoreName
                             }));
+                            
+                            // TAHAP 57 FIX: URL Replace State
+                            if (safeCode && safeCode !== '-' && window.history.replaceState && !window.location.search.includes(safeCode)) {
+                                window.history.replaceState(null, '', `/order?orderId=${safeCode}`);
+                            }
+
                             setIsLoading(false); // END LOADING
                         };
 
@@ -216,6 +226,12 @@ export default function ReceiptPage() {
                             transactionCode: order.transactionCode,
                             storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, '')
                         });
+                        
+                        // TAHAP 57 FIX: URL Replace State
+                        if (order.transactionCode && window.history.replaceState && !window.location.search.includes(order.transactionCode)) {
+                            window.history.replaceState(null, '', `/order?orderId=${order.transactionCode}`);
+                        }
+
                         setIsLoading(false);
                     }, 0);
                 } else {
