@@ -292,6 +292,52 @@ export default function ReceiptPage() {
 
     }, []);
 
+    // --- WHATSAPP REDIRECT LOGIC ---
+    useEffect(() => {
+        if (!orderData || !orderData.transactionCode || orderData.transactionCode === '-' || orderData.transactionCode === 'Memproses...') return;
+
+        const checkWaRedirect = async () => {
+            const redirectKey = `wa_redirected_${orderData.transactionCode}`;
+            if (localStorage.getItem(redirectKey)) return;
+
+            try {
+                const storedTable = localStorage.getItem('customer_table');
+                if (storedTable) {
+                    const parsedTable = JSON.parse(storedTable);
+                    const rawStoreId = parsedTable.location?.storeId;
+                    const storeId = Number.isInteger(Number(rawStoreId)) && Number(rawStoreId) > 0 ? Math.floor(Number(rawStoreId)) : null;
+
+                    if (storeId) {
+                        const storeRes = await getStore(storeId);
+                        if (storeRes && storeRes.success && storeRes.data) {
+                            if (storeRes.data.isWaOrderNotificationActive && storeRes.data.whatsappNumber) {
+                                // Mark as redirected
+                                localStorage.setItem(redirectKey, 'true');
+
+                                // Get Customer Name
+                                const customerName = localStorage.getItem('customerName') || 'Pelanggan';
+
+                                // Construct items string
+                                const itemsString = orderData.items.map(it => `- ${it.qty}x ${it.name}`).join('\n');
+
+                                const text = `Halo, saya pesan di aplikasi Quacxel atas nama *${customerName}*.\n\nPesanan saya:\n${itemsString}\n\nKode Pesanan: *${orderData.transactionCode}*\n\nTolong di cek di aplikasi meja pesan ya, terima kasih!`;
+
+                                let waUrl = `https://wa.me/${storeRes.data.whatsappNumber}?text=${encodeURIComponent(text)}`;
+                                
+                                // Auto redirect (using location.href avoids popup blockers)
+                                window.location.href = waUrl;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                if (process.env.NODE_ENV !== 'production') console.error("WA Redirect Error", e);
+            }
+        };
+
+        checkWaRedirect();
+    }, [orderData.transactionCode, orderData.items]);
+
     // --- AUTO-TRACKER UNTUK HALAMAN STATUS ---
     useEffect(() => {
         if (orderData && orderData.transactionCode && orderData.transactionCode !== '-' && orderData.transactionCode !== 'Memproses...') {
