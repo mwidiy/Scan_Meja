@@ -338,7 +338,14 @@ export default function ReceiptPage() {
 
                                 const text = `Halo, saya pesan di aplikasi Quacxel atas nama *${customerName}*.\n\nPesanan saya:\n${itemsString}\n\nKode Pesanan: *${orderData.transactionCode}*\n\nTolong di cek di aplikasi meja pesan ya, terima kasih!`;
 
-                                let waUrl = `https://wa.me/${storeRes.data.whatsappNumber}?text=${encodeURIComponent(text)}`;
+                                let formattedPhone = storeRes.data.whatsappNumber.replace(/\D/g, '');
+                                if (formattedPhone.startsWith('0')) {
+                                    formattedPhone = '62' + formattedPhone.substring(1);
+                                } else if (formattedPhone.startsWith('8')) {
+                                    formattedPhone = '62' + formattedPhone;
+                                }
+
+                                let waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
                                 
                                 // Auto redirect (using location.href avoids popup blockers)
                                 window.location.href = waUrl;

@@ -191,6 +191,7 @@ export default function CheckoutPage() {
                                 if (settings.isDineInActive) return 'dinein';
                                 if (settings.isTakeawayActive) return 'takeaway';
                             }
+                            return current;
                         });
 
                         // Fetch Shipping Zones if delivery is active
@@ -365,10 +366,17 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (orderType === 'delivery' && (!location || !location.trim())) {
-            alert('Mohon masukkan lokasi antar.');
-            openLocationModal();
-            return;
+        if (orderType === 'delivery') {
+            if (storeSettings.isDeliveryActive && shippingZones.length > 0 && !selectedZone) {
+                alert('Mohon pilih zona pengiriman.');
+                openLocationModal();
+                return;
+            }
+            if (!location || !location.trim()) {
+                alert('Mohon masukkan lokasi antar.');
+                openLocationModal();
+                return;
+            }
         }
 
         let storeId = null;
