@@ -386,7 +386,9 @@ export default function ReceiptPage() {
 
     const formatRupiah = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
 
-    const total = (orderData.items || []).reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+    const subtotal = (orderData.items || []).reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+    const shippingFee = Number(orderData.shippingFee) || 0;
+    const total = subtotal + shippingFee;
     const orderDate = orderData.date ? new Date(orderData.date) : new Date();
     const formattedDate = orderDate.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
