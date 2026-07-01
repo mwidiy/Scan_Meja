@@ -334,7 +334,8 @@ export default function ReceiptPage() {
                                 const customerName = localStorage.getItem('customerName') || 'Pelanggan';
 
                                 // Construct items string
-                                const itemsString = orderData.items.map(it => `- ${it.qty}x ${it.name}`).join('\n');
+                                const itemsString = orderData.items.map(it => `- ${it.qty}x ${it.name}`).join('\n') + 
+                                    (orderData.shippingFee > 0 ? `\n- Ongkos Kirim: Rp ${Number(orderData.shippingFee).toLocaleString('id-ID')}` : '');
 
                                 const text = `Halo, saya pesan di aplikasi Quacxel atas nama *${customerName}*.\n\nPesanan saya:\n${itemsString}\n\nKode Pesanan: *${orderData.transactionCode}*\n\nTolong di cek di aplikasi meja pesan ya, terima kasih!`;
 
@@ -568,6 +569,18 @@ export default function ReceiptPage() {
                                                 </div>
                                             ))
                                         )}
+                                        {shippingFee > 0 && (
+                                            <>
+                                                <div className="line-item" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #E5E7EB' }}>
+                                                    <span className="line-item-name" style={{ color: 'var(--text-sub)' }}>Subtotal</span>
+                                                    <span className="line-item-price">{formatRupiah(subtotal)}</span>
+                                                </div>
+                                                <div className="line-item" style={{ marginTop: '4px' }}>
+                                                    <span className="line-item-name" style={{ color: 'var(--text-sub)' }}>Ongkos Kirim</span>
+                                                    <span className="line-item-price">{formatRupiah(shippingFee)}</span>
+                                                </div>
+                                            </>
+                                        )}
 
                                         <div className="dashed-divider" />
 
@@ -620,7 +633,8 @@ export default function ReceiptPage() {
                                 items: orderData.items,
                                 status: orderData.status,
                                 transactionCode: orderData.transactionCode,
-                                storeName: orderData.storeName
+                                storeName: orderData.storeName,
+                                shippingFee: orderData.shippingFee
                             };
                             try { sessionStorage.setItem('waiting_state', JSON.stringify(trackingState)); } catch (e) { }
                             router.push('/waiting');
