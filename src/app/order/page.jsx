@@ -5,7 +5,7 @@ import { getOrderByTransactionCode, getOrderById, getStore, createOrder } from '
 
 export default function ReceiptPage() {
     const router = useRouter();
-    const [orderData, setOrderData] = useState({ id: '', items: [], method: 'QRIS', date: '', meta: {}, status: 'paid', storeName: '' });
+    const [orderData, setOrderData] = useState({ id: '', items: [], method: 'QRIS', date: '', meta: {}, status: 'paid', storeName: '', shippingFee: 0 });
     const [isLoading, setIsLoading] = useState(true); // NEW: Skeleton Loading State
 
     useEffect(() => {
@@ -50,7 +50,8 @@ export default function ReceiptPage() {
                         method: parsedPayload.paymentMethod,
                         date: new Date().toISOString(),
                         status: parsedPayload.paymentStatus === 'Paid' ? 'paid' : 'unpaid',
-                        storeName: 'Memproses...'
+                        storeName: 'Memproses...',
+                        shippingFee: Number(parsedPayload.shippingFee) || 0
                     }));
                     // TAHAP 52 FIX: Jangan setIsLoading(false) di sini. Biarkan loading muter.
                     // setIsLoading(false); // END LOADING INSTANTLY
@@ -66,6 +67,7 @@ export default function ReceiptPage() {
                                 ...prev,
                                 id: response.data.id,
                                 transactionCode: response.data.transactionCode,
+                                shippingFee: response.data.shippingFee !== undefined ? Number(response.data.shippingFee) : prev.shippingFee
                                 // Trigger a re-fetch of the order to get full names/details from server
                             }));
 
@@ -148,7 +150,8 @@ export default function ReceiptPage() {
                                 meta: parsed.meta || {},
                                 status,
                                 transactionCode: safeCode,
-                                storeName: safeStoreName
+                                storeName: safeStoreName,
+                                shippingFee: Number(parsed.shippingFee) || 0
                             }));
                             
                             // TAHAP 57 FIX: URL Replace State
@@ -224,7 +227,8 @@ export default function ReceiptPage() {
                             meta: {},
                             status: order.paymentStatus === 'Paid' ? 'paid' : 'unpaid',
                             transactionCode: order.transactionCode,
-                            storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, '')
+                            storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, ''),
+                            shippingFee: Number(order.shippingFee) || 0
                         });
                         
                         // TAHAP 57 FIX: URL Replace State
@@ -261,7 +265,8 @@ export default function ReceiptPage() {
                             meta: {},
                             status: order.paymentStatus === 'Paid' ? 'paid' : 'unpaid',
                             transactionCode: order.transactionCode,
-                            storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, '')
+                            storeName: String(order.store?.name || '').substring(0, 50).replace(/[<>&"']/g, ''),
+                            shippingFee: Number(order.shippingFee) || 0
                         });
                         setIsLoading(false);
                     }, 0);
