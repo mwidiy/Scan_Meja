@@ -8,15 +8,23 @@ function ARPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [modelSrc, setModelSrc] = useState(null);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
         const src = searchParams.get('src');
         if (src) {
             setModelSrc(src);
         }
     }, [searchParams]);
 
-    if (!modelSrc) return <div className="w-full h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
+    if (!isMounted || !modelSrc) {
+        return (
+            <div className="w-full h-screen bg-black flex items-center justify-center text-white font-medium animate-pulse">
+                Memuat Layar AR...
+            </div>
+        );
+    }
 
     return (
         <ARViewer

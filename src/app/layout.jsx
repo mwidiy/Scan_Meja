@@ -4,6 +4,7 @@
 import "../styles/globals.css";
 
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import TableGuard from '../components/TableGuard';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -18,6 +19,12 @@ export default function RootLayout({ children }) {
     <html lang="id">
       {/* suppressHydrationWarning ditambahkan untuk mencegah error ekstensi browser */}
       <body className={inter.className} suppressHydrationWarning={true}>
+        {/* Registrasi dini web component model-viewer agar aman dari hydration & late-loading crash */}
+        <Script
+          src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
+          type="module"
+          strategy="afterInteractive"
+        />
         <TableGuard>
           {children}
         </TableGuard>

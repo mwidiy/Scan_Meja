@@ -1,11 +1,25 @@
 'use client';
 
-import Script from 'next/script';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export default function ARViewer({ onClose, modelSrc = '/assets/extra_chocolate_marshmallow_cupcake.glb' }) {
     const modelViewerRef = useRef(null);
     const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+        const viewer = modelViewerRef.current;
+        if (viewer) {
+            const handleError = (e) => {
+                console.warn("model-viewer event error:", e);
+                setHasError(true);
+            };
+            viewer.addEventListener('error', handleError);
+            return () => viewer.removeEventListener('error', handleError);
+        }
+    }, []);
 
     const handleARClick = (e) => {
         e.preventDefault();
@@ -19,6 +33,25 @@ export default function ARViewer({ onClose, modelSrc = '/assets/extra_chocolate_
         }
     };
 
+    if (!isMounted) {
+        return (
+            <div style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'black',
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+            }}>
+                <div className="flex flex-col items-center animate-pulse">
+                    <span className="text-xl font-bold">Memuat AR Viewer...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div style={{
             position: 'fixed',
@@ -30,13 +63,6 @@ export default function ARViewer({ onClose, modelSrc = '/assets/extra_chocolate_
         }}
             onClick={(e) => e.stopPropagation()}
         >
-            {/* 1. LOAD SCRIPT DENGAN ATRIBUT KEAMANAN */}
-            <Script
-                src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-                type="module"
-                crossOrigin="anonymous"
-                strategy="lazyOnload"
-            />
 
             {/* 2. LAYER MODEL 3D */}
             <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
@@ -180,6 +206,53 @@ export default function ARViewer({ onClose, modelSrc = '/assets/extra_chocolate_
                             }}
                         >
                             Oke, Mengerti
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL WEBGL / MODEL ERROR */}
+            {hasError && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 10000,
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '24px',
+                    pointerEvents: 'auto'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '20px',
+                        padding: '24px',
+                        maxWidth: '320px',
+                        textAlign: 'center',
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '8px' }}>
+                            Gagal Memuat Model 3D
+                        </h3>
+                        <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: '1.5', marginBottom: '24px' }}>
+                            Koneksi grafis (WebGL) pada perangkat atau browser ini terputus, atau memori tidak mencukupi untuk merender AR 3D.
+                        </p>
+                        <button
+                            onClick={onClose}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '12px',
+                                backgroundColor: '#1E3A5F',
+                                color: 'white',
+                                fontWeight: '600',
+                                border: 'none',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Tutup
                         </button>
                     </div>
                 </div>
