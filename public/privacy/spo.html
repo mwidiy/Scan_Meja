@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOP - Qr Meja Pesan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Brand Colors */
+            --primary: #1C355A;
+            --primary-light: #284775;
+            --accent: #fdd85d;
+            --accent-hover: #fccf40;
+            --dark: #0f1c30;
+            --light: #F8FAFC;
+            
+            /* Glassmorphism & UI */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-main: #1E293B;
+            --text-muted: #475569;
+            
+            /* Gradients */
+            --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            --accent-gradient: linear-gradient(to bottom right, #fee070, #fccf40);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.5;
+            animation: float 12s infinite ease-in-out alternate;
+        }
+        .blob-1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(28, 53, 90, 0.15); /* Primary Blue subtle */
+            top: -150px;
+            left: -150px;
+        }
+        .blob-2 {
+            width: 550px;
+            height: 550px;
+            background: rgba(253, 216, 93, 0.2); /* Accent Yellow subtle */
+            bottom: -200px;
+            right: -100px;
+            animation-delay: -6s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 60px) scale(1.05); }
+        }
+
+        /* Container & Header */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .header h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* Tabs Navigation */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 50px;
+            opacity: 0;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+
+        .tab-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 2px solid var(--glass-border);
+            padding: 14px 35px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(28, 53, 90, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px rgba(28, 53, 90, 0.3);
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: flex-start;
+            gap: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateX(-30px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .step-card.reveal {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 20px 40px rgba(28, 53, 90, 0.08);
+            background: #ffffff;
+        }
+        
+        .step-card:hover::before {
+            opacity: 1;
+        }
+
+        .step-number {
+            background: var(--accent-gradient);
+            color: var(--primary);
+            min-width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            box-shadow: 0 8px 15px rgba(253, 216, 93, 0.4);
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .step-details h3 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .step-details p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .step-icon {
+            font-size: 1.8rem;
+            margin-right: 12px;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        
+        /* Playstore Download Section */
+        .download-section {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            border-radius: 24px;
+            padding: 40px;
+            margin-top: 40px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 15px 40px rgba(28, 53, 90, 0.25);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .download-section.reveal {
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .download-section::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(253,216,93,0.15) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .download-section h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .download-section p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .playstore-btn {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .playstore-btn img {
+            height: 60px;
+            width: auto;
+        }
+
+        .playstore-btn:hover {
+            transform: scale(1.05) translateY(-3px);
+        }
+        
+        .playstore-btn:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.4rem; }
+            .step-card { 
+                flex-direction: column; 
+                align-items: center; 
+                text-align: center; 
+                padding: 30px 20px;
+            }
+            .step-card::before {
+                width: 100%;
+                height: 6px;
+            }
+            .tabs { flex-direction: column; padding: 0 20px; }
+            .step-details h3 { margin-top: 15px; }
+            .download-section { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Standar Operasional Prosedur</h1>
+            <p>Panduan lengkap penggunaan aplikasi <strong>Qr Meja Pesan</strong> dari sisi Pelanggan dan Kasir/Dapur. Ikuti langkah-langkah di bawah ini untuk pengalaman terbaik.</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('pelanggan')">
+                <span>👨‍👩‍👧‍👦</span> Flow Pelanggan
+            </button>
+            <button class="tab-btn" onclick="switchTab('kasir')">
+                <span>👩‍🍳</span> Flow Kasir & Dapur
+            </button>
+        </div>
+
+        <!-- Pelanggan Flow -->
+        <div id="pelanggan" class="tab-content active">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">📱</span>Scan QR Code Meja</h3>
+                    <p>Pelanggan duduk di meja yang tersedia dan membuka aplikasi kamera/scanner pada smartphone. Arahkan kamera ke QR Code yang tertempel di meja untuk mengakses halaman restoran.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🍔</span>Eksplorasi Menu & AR</h3>
+                    <p>Pelanggan melihat daftar menu makanan dan minuman yang tersedia. Jika didukung, pelanggan dapat menggunakan fitur Augmented Reality (AR) untuk melihat model 3D makanan langsung di atas meja.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🛒</span>Pilih Pesanan</h3>
+                    <p>Pilih item yang diinginkan, atur jumlah pesanan, dan tambahkan catatan khusus (opsional) sebelum memasukkan item ke keranjang pesanan.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">💳</span>Checkout & Pembayaran</h3>
+                    <p>Buka keranjang dan lakukan checkout. Pelanggan dapat memilih metode pembayaran yang disediakan (QRIS, E-Wallet, atau Tunai di Kasir). Sistem akan membuat tiket pesanan otomatis.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">5</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">⏳</span>Tunggu Pesanan Diantar</h3>
+                    <p>Setelah pembayaran terkonfirmasi, pelanggan dapat memantau status pesanan (Waiting / Processing) melalui layar HP. Pelayan akan mengantarkan makanan tepat ke nomor meja sesuai QR yang di-scan.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kasir Flow -->
+        <div id="kasir" class="tab-content">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🔔</span>Terima Notifikasi</h3>
+                    <p>Sistem kasir dan dashboard dapur akan menerima notifikasi suara dan pop-up secara real-time saat ada pesanan baru masuk dari meja pelanggan.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">✅</span>Verifikasi Pembayaran</h3>
+                    <p>Untuk pembayaran QRIS/E-Wallet, sistem memverifikasi otomatis. Untuk pembayaran Tunai, Kasir memverifikasi jumlah uang yang diterima dan menandai pesanan sebagai "Lunas".</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🍳</span>Proses di Dapur</h3>
+                    <p>Tiket pesanan diteruskan ke layar dapur. Koki mulai menyiapkan hidangan sesuai catatan dan jumlah. Status pesanan diupdate menjadi "Sedang Diproses".</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🏃‍♂️</span>Pengantaran (Delivery)</h3>
+                    <p>Setelah makanan siap, pelayan melihat nomor meja pada tiket pesanan dan mengantarkan makanan ke meja pelanggan yang bersangkutan.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">5</div>
+                <div class="step-details">
+                    <h3><span class="step-icon">🏁</span>Penyelesaian Transaksi</h3>
+                    <p>Kasir atau pelayan mengubah status pesanan menjadi "Selesai" (Close). Data transaksi akan secara otomatis tersimpan ke dalam riwayat penjualan.</p>
+                </div>
+            </div>
+            
+            <!-- Download App Section -->
+            <div class="download-section reveal">
+                <h3>Aplikasi Kasir Khusus Merchant</h3>
+                <p>Kelola pesanan, meja, dan riwayat transaksi lebih mudah langsung dari perangkat Android Anda.</p>
+                <a href="https://play.google.com/store/apps/details?id=id.quacxel.mejapesan" target="_blank" class="playstore-btn">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const activeTab = document.getElementById(tabId);
+            activeTab.classList.add('active');
+
+            // Re-trigger animations for new tab
+            triggerAnimations();
+        }
+
+        // Scroll Reveal Animation Logic
+        function triggerAnimations() {
+            const cards = document.querySelectorAll('.tab-content.active .step-card');
+            cards.forEach((card, index) => {
+                card.classList.remove('reveal'); // reset
+                setTimeout(() => {
+                    card.classList.add('reveal');
+                }, index * 120); // Staggered delay (slightly faster)
+            });
+            
+            // Handle download section reveal
+            const downloadSection = document.querySelector('.tab-content.active .download-section');
+            if(downloadSection) {
+                downloadSection.classList.remove('reveal');
+                // Trigger after cards
+                setTimeout(() => {
+                    downloadSection.classList.add('reveal');
+                }, cards.length * 120 + 200); 
+            }
+        }
+
+        // Initial trigger
+        document.addEventListener('DOMContentLoaded', () => {
+            triggerAnimations();
+        });
+    </script>
+</body>
+</html>
